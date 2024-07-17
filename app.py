@@ -128,7 +128,7 @@ with k1:
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
 
 # Print column names to debug
-st.write("Columns in DataFrame:", df.columns.tolist())
+#st.write("Columns in DataFrame:", df.columns.tolist())
 
 df = calculate_scores(df)
 
