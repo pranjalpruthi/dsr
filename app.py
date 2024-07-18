@@ -191,7 +191,6 @@ with k1:
         cur.close()
         conn.close()
         st.balloons()
-
 # Load data from database
 conn = get_connection()
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
@@ -266,7 +265,10 @@ if not df.empty:
         st.subheader('🏅 Weekly Chart')
 
         # Weekly multi-select
-        selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique(), key="weekly_multiselect")
+        weekly_options = df['Formatted_Weekly'].unique()
+        default_weekly = [week for week in weekly_options if week in weekly_options]
+
+        selected_weeks = st.multiselect('Select Weeks', options=weekly_options, default=default_weekly, key="weekly_multiselect")
 
         # Filter data based on selected weeks
         weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
@@ -277,7 +279,10 @@ if not df.empty:
         st.subheader('🪖 Monthly Chart')
 
         # Monthly multi-select
-        selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique(), key="monthly_multiselect")
+        monthly_options = df['Monthly'].unique()
+        default_monthly = [month for month in monthly_options if month in monthly_options]
+
+        selected_months = st.multiselect('Select Months', options=monthly_options, default=default_monthly, key="monthly_multiselect")
 
         # Filter data based on selected months
         monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
