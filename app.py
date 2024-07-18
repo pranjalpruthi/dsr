@@ -7,7 +7,8 @@ import psycopg2
 from psycopg2 import sql
 
 # Database connection string
-conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres?sslmode=verify-full&sslrootcert=ca.crt'
+
+conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres''
 
 # Connect to PostgreSQL database
 def get_connection():
