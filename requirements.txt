@@ -4,4 +4,4 @@ plotly
 plotly_express
 sqlitecloud
 sqlalchemy
-psycopg[binary,pool]
+psycopg2-binary
