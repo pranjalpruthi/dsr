@@ -6,11 +6,10 @@ import random
 import sqlitecloud
 
 # Connect to SQLite Cloud
-conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600")
+conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybP")
 
-# Create the database if it doesn't exist
-db_name = "sadhna_report"
-conn.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+# Use the existing database
+db_name = "iskm-dsr"
 conn.execute(f"USE DATABASE {db_name}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
@@ -30,25 +29,6 @@ def calculate_scores(df):
     df['Weekly'] = df['DATE'].dt.to_period('W')
     df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
     return df
-
-# Create table if not exists
-conn.execute('''
-CREATE TABLE IF NOT EXISTS sadhna_report (
-    DATE TEXT,
-    Devotee_Name TEXT,
-    Before_7_am_Japa_Session INTEGER,
-    Before_7_am INTEGER,
-    From_7_to_9_am INTEGER,
-    After_9_am INTEGER,
-    Book_Name TEXT,
-    Book_Reading_Time_Min INTEGER,
-    Lecture_Speaker TEXT,
-    Lecture_Time_Min INTEGER,
-    Seva_Name TEXT,
-    Seva_Time_Min INTEGER
-)
-''')
-conn.commit()
 
 # Streamlit app
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
