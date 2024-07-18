@@ -149,99 +149,106 @@ with k1:
             st.error(f"Error submitting report: {e}")
 
 # Load data from database
-df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
+try:
+    df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
+    # Print raw data to debug
+    st.write("Raw Data:", df.head())
+except Exception as e:
+    st.error(f"Error loading data: {e}")
 
 # Print column names to debug
 # st.write("Columns in DataFrame:", df.columns.tolist())
 
-df = calculate_scores(df)
-
-with k2:
-    # List of video URLs from your YouTube channel
-    video_urls = [
-        "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
-        "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
-        "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
-        "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
-        "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
-        "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX",
-        "https://youtube.com/watch?v=yhWTbP1DAjA?si=Mp_JixZG8c4fCFzk",
-        "https://youtu.be/0utP6oLxnT0?si=kEUTHiA78CUCOyx2",
-        "https://youtu.be/fyBcO6ilyjw?si=MfYiezOlTZwSUn_4",
-        "https://youtu.be/rmPLHbBbUzA?si=bJgrk6aIIe7CuR6p",
-        "https://youtu.be/bZOlGRyknXM?si=70vbuytkjhKvN8fg",
-        "https://youtu.be/PYtA10m_DBU?si=RyuduxsMf1oZ0FSQ"
-        # Add more video URLs as needed
-    ]
-
-    # Select a random video URL
-    random_video_url = random.choice(video_urls)
-
-    st.subheader('🪄📺')
-    st.video(random_video_url)
-
-c1, c2 = st.columns(2)
-
-# Statistics
 if not df.empty:
+    df = calculate_scores(df)
 
-    with c1:
-        # Top 10 devotees weekly
-        top_10_weekly = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        top_10_weekly = top_10_weekly.sort_values(by=['Formatted_Weekly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Formatted_Weekly').head(10)
-        st.write("🏅 Top 10 Devotees Weekly")
-        st.dataframe(top_10_weekly, hide_index=True)
+    with k2:
+        # List of video URLs from your YouTube channel
+        video_urls = [
+            "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
+            "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
+            "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
+            "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
+            "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
+            "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX",
+            "https://youtube.com/watch?v=yhWTbP1DAjA?si=Mp_JixZG8c4fCFzk",
+            "https://youtu.be/0utP6oLxnT0?si=kEUTHiA78CUCOyx2",
+            "https://youtu.be/fyBcO6ilyjw?si=MfYiezOlTZwSUn_4",
+            "https://youtu.be/rmPLHbBbUzA?si=bJgrk6aIIe7CuR6p",
+            "https://youtu.be/bZOlGRyknXM?si=70vbuytkjhKvN8fg",
+            "https://youtu.be/PYtA10m_DBU?si=RyuduxsMf1oZ0FSQ"
+            # Add more video URLs as needed
+        ]
 
-        # Most favorite book of the week
-        favorite_book_weekly = df.groupby(['Formatted_Weekly', 'Book_Name'])['Book_Name'].count().reset_index(name='count')
-        favorite_book_weekly = favorite_book_weekly.sort_values(by=['Formatted_Weekly', 'count'], ascending=[True, False]).groupby('Formatted_Weekly').head(1)
-        st.write("📚 Most Favorite Book of the Week")
-        st.dataframe(favorite_book_weekly, hide_index=True)
+        # Select a random video URL
+        random_video_url = random.choice(video_urls)
 
-        # Devotee of the Week
-        devotee_of_week = top_10_weekly.groupby('Formatted_Weekly').first().reset_index()
-        st.write("🌟 Devotee of the Week")
-        st.dataframe(devotee_of_week[['Formatted_Weekly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+        st.subheader('🪄📺')
+        st.video(random_video_url)
 
-    with c2:
-        # Top 10 devotees monthly
-        top_10_monthly = df.groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        top_10_monthly = top_10_monthly.sort_values(by=['Monthly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Monthly').head(10)
-        st.write("🏆 Top 10 Devotees Monthly")
-        st.dataframe(top_10_monthly, hide_index=True)
+    c1, c2 = st.columns(2)
 
-        # Devotee of the Month
-        devotee_of_month = top_10_monthly.groupby('Monthly').first().reset_index()
-        st.write("🌟 Devotee of the Month")
-        st.dataframe(devotee_of_month[['Monthly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+    # Statistics
+    if not df.empty:
 
-        # Weekly intermediate devotees requiring spiritual guidance
-        intermediate_devotees = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        intermediate_devotees = intermediate_devotees[(intermediate_devotees['Total Score (A+B+C+D)'] > 0) & (intermediate_devotees['Total Score (A+B+C+D)'] < 50)]
-        st.write("🧘‍♂️ Weekly Intermediate Devotees Requiring Spiritual Guidance")
-        st.dataframe(intermediate_devotees, hide_index=True)
+        with c1:
+            # Top 10 devotees weekly
+            top_10_weekly = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+            top_10_weekly = top_10_weekly.sort_values(by=['Formatted_Weekly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Formatted_Weekly').head(10)
+            st.write("🏅 Top 10 Devotees Weekly")
+            st.dataframe(top_10_weekly, hide_index=True)
 
-    with c1:
-        st.subheader('🏅 Weekly Chart')
+            # Most favorite book of the week
+            favorite_book_weekly = df.groupby(['Formatted_Weekly', 'Book_Name'])['Book_Name'].count().reset_index(name='count')
+            favorite_book_weekly = favorite_book_weekly.sort_values(by=['Formatted_Weekly', 'count'], ascending=[True, False]).groupby('Formatted_Weekly').head(1)
+            st.write("📚 Most Favorite Book of the Week")
+            st.dataframe(favorite_book_weekly, hide_index=True)
 
-        # Weekly multi-select
-        selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique())
+            # Devotee of the Week
+            devotee_of_week = top_10_weekly.groupby('Formatted_Weekly').first().reset_index()
+            st.write("🌟 Devotee of the Week")
+            st.dataframe(devotee_of_week[['Formatted_Weekly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
 
-        # Filter data based on selected weeks
-        weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_weekly = px.bar(weekly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
-        st.plotly_chart(fig_weekly)
+        with c2:
+            # Top 10 devotees monthly
+            top_10_monthly = df.groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+            top_10_monthly = top_10_monthly.sort_values(by=['Monthly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Monthly').head(10)
+            st.write("🏆 Top 10 Devotees Monthly")
+            st.dataframe(top_10_monthly, hide_index=True)
 
-    with c2:
-        st.subheader('🪖 Monthly Chart')
-        # Monthly multi-select
-        selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique())
+            # Devotee of the Month
+            devotee_of_month = top_10_monthly.groupby('Monthly').first().reset_index()
+            st.write("🌟 Devotee of the Month")
+            st.dataframe(devotee_of_month[['Monthly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
 
-        # Filter data based on selected months
-        monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_monthly = px.bar(monthly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
-        st.plotly_chart(fig_monthly)
+            # Weekly intermediate devotees requiring spiritual guidance
+            intermediate_devotees = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+            intermediate_devotees = intermediate_devotees[(intermediate_devotees['Total Score (A+B+C+D)'] > 0) & (intermediate_devotees['Total Score (A+B+C+D)'] < 50)]
+            st.write("🧘‍♂️ Weekly Intermediate Devotees Requiring Spiritual Guidance")
+            st.dataframe(intermediate_devotees, hide_index=True)
 
-# Display data
-st.subheader('📊 Sadhna Data')
-st.dataframe(df, hide_index=True)
+        with c1:
+            st.subheader('🏅 Weekly Chart')
+
+            # Weekly multi-select
+            selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique())
+
+            # Filter data based on selected weeks
+            weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+            fig_weekly = px.bar(weekly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
+            st.plotly_chart(fig_weekly)
+
+        with c2:
+            st.subheader('🪖 Monthly Chart')
+
+            # Monthly multi-select
+            selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique())
+
+            # Filter data based on selected months
+            monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+            fig_monthly = px.bar(monthly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
+            st.plotly_chart(fig_monthly)
+
+    # Display data
+    st.subheader('📊 Sadhna Data')
+    st.dataframe(df, hide_index=True)
