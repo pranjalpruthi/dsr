@@ -38,12 +38,16 @@ def init_db():
     conn.close()
 
 # Function to calculate scores
+# Function to calculate scores
 def calculate_scores(df):
     df['Total Rounds'] = df['before_7_am_japa_session'] + df['before_7_am'] + df['from_7_to_9_am'] + df['after_9_am']
     df['Score (A)'] = (df['before_7_am_japa_session'] * 2.5 + df['before_7_am'] * 2 + df['from_7_to_9_am'] * 1.5 + df['after_9_am'] * 1).clip(upper=25)
-    df['Score (B)'] = pd.cut(df['book_reading_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
-    df['Score (C)'] = pd.cut(df['lecture_time_min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
-    df['Score (D)'] = pd.cut(df['seva_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
+    
+    # Fill NaN values with a default value before converting to integers
+    df['Score (B)'] = pd.cut(df['book_reading_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(float).fillna(0).astype(int)
+    df['Score (C)'] = pd.cut(df['lecture_time_min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(float).fillna(0).astype(int)
+    df['Score (D)'] = pd.cut(df['seva_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(float).fillna(0).astype(int)
+    
     df['Total Score (A+B+C+D)'] = df['Score (A)'] + df['Score (B)'] + df['Score (C)'] + df['Score (D)']
     df['date'] = pd.to_datetime(df['date'])  # Ensure date column is in datetime format
     df['Monthly'] = df['date'].dt.to_period('M')
