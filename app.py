@@ -3,19 +3,17 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import random
-import sqlite3
 import sqlitecloud
 
+# Read the API key from secrets
 api_key = st.secrets["sqlitecloud"]["apikey"]
 
 # Create SQLite Cloud connection
-conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
+conn = sqlitecloud.connect(f"sqlitecloud://myhost.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
-page_icon="🪖 ",
-layout='wide',)
-
-
+                   page_icon="🪖 ",
+                   layout='wide',)
 
 # Function to calculate scores
 def calculate_scores(df):
@@ -78,7 +76,7 @@ with st.sidebar.expander("Rename Devotee"):
         else:
             st.error("Please enter a new name.")
 
-k1,k2 = st.columns(2)
+k1, k2 = st.columns(2)
 
 with k1:
     # Form for input
@@ -139,19 +137,19 @@ with k1:
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
 
 # Print column names to debug
-#st.write("Columns in DataFrame:", df.columns.tolist())
+# st.write("Columns in DataFrame:", df.columns.tolist())
 
 df = calculate_scores(df)
 
 with k2:
     # List of video URLs from your YouTube channel
     video_urls = [
-    "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
-    "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
-    "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
-    "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
-    "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
-        "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX" ,
+        "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
+        "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
+        "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
+        "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
+        "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
+        "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX",
         "https://youtube.com/watch?v=yhWTbP1DAjA?si=Mp_JixZG8c4fCFzk",
         "https://youtu.be/0utP6oLxnT0?si=kEUTHiA78CUCOyx2",
         "https://youtu.be/fyBcO6ilyjw?si=MfYiezOlTZwSUn_4",
@@ -164,11 +162,10 @@ with k2:
     # Select a random video URL
     random_video_url = random.choice(video_urls)
 
-with k2:
     st.subheader('🪄📺')
     st.video(random_video_url)
 
-c1,c2 = st.columns(2)
+c1, c2 = st.columns(2)
 
 # Statistics
 if not df.empty:
