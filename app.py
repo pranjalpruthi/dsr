@@ -6,7 +6,7 @@ import random
 import sqlitecloud
 
 # Connect to SQLite Cloud
-conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybP")
+conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600")
 
 # Use the existing database
 db_name = "iskm-dsr"
