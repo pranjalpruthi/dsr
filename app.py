@@ -110,21 +110,21 @@ def rename_devotee(old_name, new_name):
 # Sidebar options
 devotees_list = load_devotees()
 with st.sidebar.expander("Add Devotee"):
-    new_devotee = st.text_input("New Devotee Name")
-    if st.button("Add Devotee"):
+    new_devotee = st.text_input("New Devotee Name", key="new_devotee")
+    if st.button("Add Devotee", key="add_devotee_button"):
         add_devotee(new_devotee)
         st.experimental_rerun()
 
 with st.sidebar.expander("Remove Devotee"):
-    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotees_list)
-    if st.button("Remove Devotee"):
+    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotees_list, key="remove_devotee")
+    if st.button("Remove Devotee", key="remove_devotee_button"):
         remove_devotee(remove_devotee_name)
         st.experimental_rerun()
 
 with st.sidebar.expander("Rename Devotee"):
-    old_devotee_name = st.selectbox("Select Devotee to Rename", devotees_list)
-    new_devotee_name = st.text_input("New Devotee Name")
-    if st.button("Rename Devotee"):
+    old_devotee_name = st.selectbox("Select Devotee to Rename", devotees_list, key="old_devotee")
+    new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
+    if st.button("Rename Devotee", key="rename_devotee_button"):
         rename_devotee(old_devotee_name, new_devotee_name)
         st.experimental_rerun()
 
@@ -137,41 +137,41 @@ with k1:
         # Date and Devotee Name
         col1, col2 = st.columns(2)
         with col1:
-            date = st.date_input('📅 Date', value=datetime.today())
+            date = st.date_input('📅 Date', value=datetime.today(), key="date_input")
         with col2:
-            devotee_name = st.selectbox('🙏 Devotee Name', devotees_list)
+            devotee_name = st.selectbox('🙏 Devotee Name', devotees_list, key="devotee_name_input")
         
         # Japa Sessions
         col3, col4, col5, col6 = st.columns(4)
         with col3:
-            before_7am_japa = st.number_input('🌅 Before 7 am (Japa Session)', min_value=0, step=1)
+            before_7am_japa = st.number_input('🌅 Before 7 am (Japa Session)', min_value=0, step=1, key="before_7am_japa")
         with col4:
-            before_7am = st.number_input('🌄 Before 7 am', min_value=0, step=1)
+            before_7am = st.number_input('🌄 Before 7 am', min_value=0, step=1, key="before_7am")
         with col5:
-            from_7_to_9am = st.number_input('🕖 7 to 09 am', min_value=0, step=1)
+            from_7_to_9am = st.number_input('🕖 7 to 09 am', min_value=0, step=1, key="from_7_to_9am")
         with col6:
-            after_9am = st.number_input('🌞 After 9 am', min_value=0, step=1)
+            after_9am = st.number_input('🌞 After 9 am', min_value=0, step=1, key="after_9am")
         
         # Book Reading
         col7, col8 = st.columns(2)
         with col7:
-            book_name = st.text_input('📚 Book Name')
+            book_name = st.text_input('📚 Book Name', key="book_name")
         with col8:
-            book_reading_time = st.number_input('📖 Book Reading Time Min', min_value=0, step=1)
+            book_reading_time = st.number_input('📖 Book Reading Time Min', min_value=0, step=1, key="book_reading_time")
         
         # Lecture
         col9, col10 = st.columns(2)
         with col9:
-            lecture_speaker = st.text_input('🎤 Lecture Speaker')
+            lecture_speaker = st.text_input('🎤 Lecture Speaker', key="lecture_speaker")
         with col10:
-            lecture_time = st.number_input('🕰️ Lecture Time Min', min_value=0, step=1)
+            lecture_time = st.number_input('🕰️ Lecture Time Min', min_value=0, step=1, key="lecture_time")
         
         # Seva
         col11, col12 = st.columns(2)
         with col11:
-            seva_name = st.text_input('🛠️ Seva Name')
+            seva_name = st.text_input('🛠️ Seva Name', key="seva_name")
         with col12:
-            seva_time = st.number_input('⏳ Seva Time Min', min_value=0, step=1)
+            seva_time = st.number_input('⏳ Seva Time Min', min_value=0, step=1, key="seva_time")
         
         submit_button = st.form_submit_button(label='✅ Hari Bol ! Jaya Śrīla Prabhupāda! 🙇🏻‍♂️ Submit', type="primary")
 
@@ -262,7 +262,7 @@ if not df.empty:
         st.subheader('🏅 Weekly Chart')
 
         # Weekly multi-select
-        selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique())
+        selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique(), key="weekly_multiselect")
 
         # Filter data based on selected weeks
         weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
@@ -273,7 +273,7 @@ if not df.empty:
         st.subheader('🪖 Monthly Chart')
 
         # Monthly multi-select
-        selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique())
+        selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique(), key="monthly_multiselect")
 
         # Filter data based on selected months
         monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
