@@ -148,6 +148,9 @@ with k1:
         except Exception as e:
             st.error(f"Error submitting report: {e}")
 
+# Initialize df to None
+df = None
+
 # Load data from database
 try:
     df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
@@ -159,7 +162,7 @@ except Exception as e:
 # Print column names to debug
 # st.write("Columns in DataFrame:", df.columns.tolist())
 
-if not df.empty:
+if df is not None and not df.empty:
     df = calculate_scores(df)
 
     with k2:
