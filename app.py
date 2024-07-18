@@ -13,41 +13,6 @@ conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data
 def get_connection():
     return psycopg2.connect(conn_str)
 
-# Initialize PostgreSQL database
-def init_db():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute('''
-    CREATE TABLE IF NOT EXISTS devotees (
-        devotee_id SERIAL PRIMARY KEY,
-        devotee_name TEXT UNIQUE NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sadhna_report (
-        record_id SERIAL PRIMARY KEY,
-        devotee_id INTEGER REFERENCES devotees(devotee_id),
-        date DATE,
-        before_7_am_japa_session INTEGER,
-        before_7_am INTEGER,
-        from_7_to_9_am INTEGER,
-        after_9_am INTEGER,
-        book_name TEXT,
-        book_reading_time_min INTEGER,
-        lecture_speaker TEXT,
-        lecture_time_min INTEGER,
-        seva_name TEXT,
-        seva_time_min INTEGER,
-        total_rounds INTEGER,
-        score_a INTEGER,
-        score_b INTEGER,
-        score_c INTEGER,
-        score_d INTEGER,
-        total_score INTEGER
-    );
-    ''')
-    conn.commit()
-    cur.close()
-    conn.close()
-
 # Function to calculate scores
 def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_reading_time_min, lecture_time_min, seva_time_min):
     total_rounds = before_7_am_japa_session + before_7_am + from_7_to_9_am + after_9_am
@@ -57,9 +22,6 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
     score_d = pd.cut([seva_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)[0]
     total_score = score_a + score_b + score_c + score_d
     return total_rounds, score_a, score_b, score_c, score_d, total_score
-
-# Initialize database
-init_db()
 
 # Streamlit app
 st.set_page_config(
@@ -192,9 +154,9 @@ with k1:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute('''
-        INSERT INTO sadhna_report (devotee_id, date, before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_name, book_reading_time_min, lecture_speaker, lecture_time_min, seva_name, seva_time_min, total_rounds, score_a, score_b, score_c, score_d, total_score)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (devotee_id, date, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time, total_rounds, score_a, score_b, score_c, score_d, total_score))
+        INSERT INTO sadhna_report (date, devotee_id, before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_name, book_reading_time_min, lecture_speaker, lecture_time_min, seva_name, seva_time_min, total_rounds, score_a, score_b, score_c, score_d, total_score)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (date, devotee_id, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time, total_rounds, score_a, score_b, score_c, score_d, total_score))
         conn.commit()
         cur.close()
         conn.close()
@@ -204,7 +166,7 @@ with k1:
 conn = get_connection()
 df = pd.read_sql_query('''
 SELECT sr.*, d.devotee_name 
-FROM sadhna_report sr
+FROM sadhna_report sr 
 JOIN devotees d ON sr.devotee_id = d.devotee_id
 ''', conn)
 conn.close()
