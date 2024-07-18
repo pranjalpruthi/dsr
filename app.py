@@ -50,9 +50,13 @@ with st.sidebar.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name")
     if st.button("Add Devotee"):
         if new_devotee:
-            conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
-            conn.commit()
-            st.success(f"Devotee {new_devotee} added successfully!")
+            try:
+                # Assuming other columns can be NULL or have default values
+                conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
+                conn.commit()
+                st.success(f"Devotee {new_devotee} added successfully!")
+            except sqlitecloud.SQLiteCloudException as e:
+                st.error(f"Error adding devotee: {e}")
         else:
             st.error("Please enter a devotee name.")
 
@@ -60,9 +64,12 @@ with st.sidebar.expander("Add Devotee"):
 with st.sidebar.expander("Remove Devotee"):
     remove_devotee = st.selectbox("Select Devotee to Remove", devotees_list)
     if st.button("Remove Devotee"):
-        conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
-        conn.commit()
-        st.success(f"Devotee {remove_devotee} removed successfully!")
+        try:
+            conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
+            conn.commit()
+            st.success(f"Devotee {remove_devotee} removed successfully!")
+        except sqlitecloud.SQLiteCloudException as e:
+            st.error(f"Error removing devotee: {e}")
 
 # Rename a devotee
 with st.sidebar.expander("Rename Devotee"):
@@ -70,9 +77,12 @@ with st.sidebar.expander("Rename Devotee"):
     new_name = st.text_input("New Name")
     if st.button("Rename Devotee"):
         if new_name:
-            conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
-            conn.commit()
-            st.success(f"Devotee {rename_devotee} renamed to {new_name} successfully!")
+            try:
+                conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
+                conn.commit()
+                st.success(f"Devotee {rename_devotee} renamed to {new_name} successfully!")
+            except sqlitecloud.SQLiteCloudException as e:
+                st.error(f"Error renaming devotee: {e}")
         else:
             st.error("Please enter a new name.")
 
@@ -126,12 +136,15 @@ with k1:
 
     # Add new entry to database
     if submit_button:
-        conn.execute('''
-        INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
-        conn.commit()
-        st.balloons()  # Add this line to show balloons after submission
+        try:
+            conn.execute('''
+            INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
+            conn.commit()
+            st.balloons()  # Add this line to show balloons after submission
+        except sqlitecloud.SQLiteCloudException as e:
+            st.error(f"Error submitting report: {e}")
 
 # Load data from database
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
