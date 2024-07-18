@@ -17,7 +17,7 @@ devotees_list = [
     "Ravi Singh", "Deepanshu Chaudhary", "Aryan Patney", "Gianni Prabhu", "Dharani Bharathi M", "Sai Karthi",
     "Drona Charan", "Vivek S", "Vivek Hk", "Vikas Prabhu", "Sujay Prabhu", "Pranjal Pruthi", "Pankaj Jalal",
     "Shivanshu Tewari", "Kallesh Prabhu", "Patita Pâvana dâsa", "Dama Ganga Sujith", "Bhakta Jad", "Sourav Sahoo",
-    "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivrani prabhu", "Subam Barman",
+    "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivranj prabhu", "Subam Barman",
     "Veron Singh", "Arvindapada Krsna dasa", "Aryan", "Debalay Prabhu", "Drona Prabhu", "Ero-Taisto Prabhu", "Gianni Prabhu", "Krishna Vinod Prabhu",
     "Mohith Prabhu", "Shubam barman Prabhu"
 ]
