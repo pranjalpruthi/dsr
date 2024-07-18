@@ -3,17 +3,18 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import random
-import sqlitecloud
+from sqlalchemy import create_engine
 
 # Read the API key from secrets
 api_key = st.secrets["sqlitecloud"]["apikey"]
 
-# Connect to SQLite Cloud
-conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey={api_key}")
+# Create SQLAlchemy engine
+engine = create_engine(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey={api_key}")
 
 # Use the existing database
 db_name = "iskm-dsr"
-conn.execute(f"USE DATABASE {db_name}")
+with engine.connect() as conn:
+    conn.execute(f"USE DATABASE {db_name}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
@@ -45,7 +46,8 @@ st.sidebar.title("Manage Devotees")
 
 # Show list of devotees
 with st.sidebar.expander("Show Devotees"):
-    devotees = conn.execute("SELECT DISTINCT Devotee_Name FROM sadhna_report").fetchall()
+    with engine.connect() as conn:
+        devotees = conn.execute("SELECT DISTINCT Devotee_Name FROM sadhna_report").fetchall()
     devotees_list = [devotee[0] for devotee in devotees]
     st.write(devotees_list)
 
@@ -54,8 +56,9 @@ with st.sidebar.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name")
     if st.button("Add Devotee"):
         if new_devotee:
-            conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
-            conn.commit()
+            with engine.connect() as conn:
+                conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
+                conn.commit()
             st.success(f"Devotee {new_devotee} added successfully!")
         else:
             st.error("Please enter a devotee name.")
@@ -64,8 +67,9 @@ with st.sidebar.expander("Add Devotee"):
 with st.sidebar.expander("Remove Devotee"):
     remove_devotee = st.selectbox("Select Devotee to Remove", devotees_list)
     if st.button("Remove Devotee"):
-        conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
-        conn.commit()
+        with engine.connect() as conn:
+            conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
+            conn.commit()
         st.success(f"Devotee {remove_devotee} removed successfully!")
 
 # Rename a devotee
@@ -74,8 +78,9 @@ with st.sidebar.expander("Rename Devotee"):
     new_name = st.text_input("New Name")
     if st.button("Rename Devotee"):
         if new_name:
-            conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
-            conn.commit()
+            with engine.connect() as conn:
+                conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
+                conn.commit()
             st.success(f"Devotee {rename_devotee} renamed to {new_name} successfully!")
         else:
             st.error("Please enter a new name.")
@@ -130,15 +135,17 @@ with k1:
 
     # Add new entry to database
     if submit_button:
-        conn.execute('''
-        INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
-        conn.commit()
+        with engine.connect() as conn:
+            conn.execute('''
+            INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
+            conn.commit()
         st.balloons()  # Add this line to show balloons after submission
 
 # Load data from database
-df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
+with engine.connect() as conn:
+    df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
 
 # Print column names to debug
 #st.write("Columns in DataFrame:", df.columns.tolist())
