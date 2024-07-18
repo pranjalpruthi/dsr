@@ -2,3 +2,4 @@ streamlit
 pandas
 plotly
 plotly_express
+sqlitecloud

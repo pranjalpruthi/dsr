@@ -3,10 +3,10 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import random
-import sqlite3
+import sqlitecloud
 
-st.set_page_config(initial_sidebar_state="collapsed",
-page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
+st.set_page_config(
+page_title="🪖 Daily Sadhana Report 📝 DSR v2.0",
 page_icon="🪖 ",
 layout='wide',)
 
@@ -19,25 +19,24 @@ devotees_list = [
     "Shivanshu Tewari", "Kallesh Prabhu", "Patita Pâvana dâsa", "Dama Ganga Sujith", "Bhakta Jad", "Sourav Sahoo",
     "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivrani prabhu", "Subam Barman",
     "Veron Singh", "Arvindapada Krsna dasa", "Aryan", "Debalay Prabhu", "Drona Prabhu", "Ero-Taisto Prabhu", "Gianni Prabhu", "Krishna Vinod Prabhu",
-    "Mohith Prabhu", "Shubam barman Prabhu"
+    "Mohith Prabhu", "Patita Pavana dasa", "Shubam barman Prabhu"
 ]
 
 # Function to calculate scores
 def calculate_scores(df):
-    df['Total Rounds'] = df['Before_7_am_Japa_Session'] + df['Before_7_am'] + df['From_7_to_9_am'] + df['After_9_am']
-    df['Score (A)'] = (df['Before_7_am_Japa_Session'] * 2.5 + df['Before_7_am'] * 2 + df['From_7_to_9_am'] * 1.5 + df['After_9_am'] * 1).clip(upper=25)
-    df['Score (B)'] = pd.cut(df['Book_Reading_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
-    df['Score (C)'] = pd.cut(df['Lecture_Time_Min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
-    df['Score (D)'] = pd.cut(df['Seva_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
+    df['Total Rounds'] = df['Before 7 am (Japa Session)'] + df['Before 7 am'] + df['7 to 09 am'] + df['After 9 am']
+    df['Score (A)'] = (df['Before 7 am (Japa Session)'] * 2.5 + df['Before 7 am'] * 2 + df['7 to 09 am'] * 1.5 + df['After 9 am'] * 1).clip(upper=25)
+    df['Score (B)'] = pd.cut(df['Book Reading Time Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
+    df['Score (C)'] = pd.cut(df['Lecture Time Min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
+    df['Score (D)'] = pd.cut(df['Seva Time Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
     df['Total Score (A+B+C+D)'] = df['Score (A)'] + df['Score (B)'] + df['Score (C)'] + df['Score (D)']
     df['DATE'] = pd.to_datetime(df['DATE'])  # Ensure DATE column is in datetime format
     df['Monthly'] = df['DATE'].dt.to_period('M')
     df['Weekly'] = df['DATE'].dt.to_period('W')
-    df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
     return df
 
-# Initialize SQLite database
-conn = sqlite3.connect('sadhna_report.db')
+# Initialize SQLiteCloud connection
+conn = sqlitecloud.connect('sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600')
 c = conn.cursor()
 
 # Create table if not exists
@@ -64,7 +63,7 @@ st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
 st.subheader('.💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
-st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
+st.warning('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
 k1,k2 = st.columns(2)
 
@@ -121,15 +120,9 @@ with k1:
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
         conn.commit()
-        st.balloons()  # Add this line to show balloons after submission
-
 
 # Load data from database
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
-
-# Print column names to debug
-#st.write("Columns in DataFrame:", df.columns.tolist())
-
 df = calculate_scores(df)
 
 with k2:
@@ -164,62 +157,56 @@ if not df.empty:
 
     with c1:
         # Top 10 devotees weekly
-        top_10_weekly = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        top_10_weekly = top_10_weekly.sort_values(by=['Formatted_Weekly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Formatted_Weekly').head(10)
+        top_10_weekly = df.groupby(['Weekly', 'Devotee Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        top_10_weekly = top_10_weekly.sort_values(by=['Weekly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Weekly').head(10)
         st.write("🏅 Top 10 Devotees Weekly")
-        st.dataframe(top_10_weekly, hide_index=True)
+        st.dataframe(top_10_weekly)
 
         # Most favorite book of the week
-        favorite_book_weekly = df.groupby(['Formatted_Weekly', 'Book_Name'])['Book_Name'].count().reset_index(name='count')
-        favorite_book_weekly = favorite_book_weekly.sort_values(by=['Formatted_Weekly', 'count'], ascending=[True, False]).groupby('Formatted_Weekly').head(1)
+        favorite_book_weekly = df.groupby(['Weekly', 'Book Name'])['Book Name'].count().reset_index(name='count')
+        favorite_book_weekly = favorite_book_weekly.sort_values(by=['Weekly', 'count'], ascending=[True, False]).groupby('Weekly').head(1)
         st.write("📚 Most Favorite Book of the Week")
-        st.dataframe(favorite_book_weekly, hide_index=True)
+        st.dataframe(favorite_book_weekly)
 
         # Devotee of the Week
-        devotee_of_week = top_10_weekly.groupby('Formatted_Weekly').first().reset_index()
+        devotee_of_week = top_10_weekly.groupby('Weekly').first().reset_index()
         st.write("🌟 Devotee of the Week")
-        st.dataframe(devotee_of_week[['Formatted_Weekly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+        st.dataframe(devotee_of_week[['Weekly', 'Devotee Name', 'Total Score (A+B+C+D)']])
 
     with c2:
         # Top 10 devotees monthly
-        top_10_monthly = df.groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        top_10_monthly = df.groupby(['Monthly', 'Devotee Name'])['Total Score (A+B+C+D)'].sum().reset_index()
         top_10_monthly = top_10_monthly.sort_values(by=['Monthly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Monthly').head(10)
         st.write("🏆 Top 10 Devotees Monthly")
-        st.dataframe(top_10_monthly, hide_index=True)
+        st.dataframe(top_10_monthly)
 
         # Devotee of the Month
         devotee_of_month = top_10_monthly.groupby('Monthly').first().reset_index()
         st.write("🌟 Devotee of the Month")
-        st.dataframe(devotee_of_month[['Monthly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+        st.dataframe(devotee_of_month[['Monthly', 'Devotee Name', 'Total Score (A+B+C+D)']])
 
         # Weekly intermediate devotees requiring spiritual guidance
-        intermediate_devotees = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        intermediate_devotees = df.groupby(['Weekly', 'Devotee Name'])['Total Score (A+B+C+D)'].sum().reset_index()
         intermediate_devotees = intermediate_devotees[(intermediate_devotees['Total Score (A+B+C+D)'] > 0) & (intermediate_devotees['Total Score (A+B+C+D)'] < 50)]
         st.write("🧘‍♂️ Weekly Intermediate Devotees Requiring Spiritual Guidance")
-        st.dataframe(intermediate_devotees, hide_index=True)
+        st.dataframe(intermediate_devotees)
 
     with c1:
-        st.subheader('🏅 Weekly Chart')
+        st.subheader('📊 Weekly Chart')
 
-        # Weekly multi-select
-        selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique())
-
-        # Filter data based on selected weeks
-        weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_weekly = px.bar(weekly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
+        # Weekly chart
+        weekly_chart = df.groupby(['Weekly', 'Devotee Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        fig_weekly = px.bar(weekly_chart, x='Devotee Name', y='Total Score (A+B+C+D)', color='Weekly', title='Weekly Total Points per Devotee', barmode='stack')
         st.plotly_chart(fig_weekly)
 
     with c2:
-        st.subheader('🪖 Monthly Chart')
+        st.subheader('📊 Monthly Chart')
 
-        # Monthly multi-select
-        selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique())
-
-        # Filter data based on selected months
-        monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_monthly = px.bar(monthly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
+        # Monthly chart
+        monthly_chart = df.groupby(['Monthly', 'Devotee Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        fig_monthly = px.bar(monthly_chart, x='Devotee Name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
         st.plotly_chart(fig_monthly)
 
 # Display data
 st.subheader('📊 Sadhna Data')
-st.dataframe(df, hide_index=True)
+st.dataframe(df)
