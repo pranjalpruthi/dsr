@@ -3,24 +3,16 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import random
-import sqlite3
+import sqlitecloud
 
-st.set_page_config(initial_sidebar_state="collapsed",
-page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
+# Connect to SQLite Cloud
+conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600")
+db_name = "sadhna_report"
+conn.execute(f"USE DATABASE {db_name}")
+
+st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
 layout='wide',)
-
-# List of fixed devotees
-devotees_list = [
-    "Manu Dasa Prabhu", "Virkrishna das", "Eero-Taisto", "Amaury Prabhu", "Sreekanth", "Luveesh", "Varun prakash",
-    "Krishnavinod Kutty", "Aditya Sharma", "Satyam Sharma", "Debalay Nandi", "Sami Saranpää", "Dmitriy/Dina Krishna Das Prabhu",
-    "Ravi Singh", "Deepanshu Chaudhary", "Aryan Patney", "Gianni Prabhu", "Dharani Bharathi M", "Sai Karthi",
-    "Drona Charan", "Vivek S", "Vivek Hk", "Vikas Prabhu", "Sujay Prabhu", "Pranjal Pruthi", "Pankaj Jalal",
-    "Shivanshu Tewari", "Kallesh Prabhu", "Patita Pâvana dâsa", "Dama Ganga Sujith", "Bhakta Jad", "Sourav Sahoo",
-    "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivrani prabhu", "Subam Barman",
-    "Veron Singh", "Arvindapada Krsna dasa", "Aryan", "Debalay Prabhu", "Drona Prabhu", "Ero-Taisto Prabhu", "Gianni Prabhu", "Krishna Vinod Prabhu",
-    "Mohith Prabhu", "Shubam barman Prabhu"
-]
 
 # Function to calculate scores
 def calculate_scores(df):
@@ -36,12 +28,8 @@ def calculate_scores(df):
     df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
     return df
 
-# Initialize SQLite database
-conn = sqlite3.connect('sadhna_report.db')
-c = conn.cursor()
-
 # Create table if not exists
-c.execute('''
+conn.execute('''
 CREATE TABLE IF NOT EXISTS sadhna_report (
     DATE TEXT,
     Devotee_Name TEXT,
@@ -65,6 +53,46 @@ st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 st.subheader('.💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
+
+# Sidebar for managing devotees
+st.sidebar.title("Manage Devotees")
+
+# Show list of devotees
+with st.sidebar.expander("Show Devotees"):
+    devotees = conn.execute("SELECT DISTINCT Devotee_Name FROM sadhna_report").fetchall()
+    devotees_list = [devotee[0] for devotee in devotees]
+    st.write(devotees_list)
+
+# Add a new devotee
+with st.sidebar.expander("Add Devotee"):
+    new_devotee = st.text_input("New Devotee Name")
+    if st.button("Add Devotee"):
+        if new_devotee:
+            conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
+            conn.commit()
+            st.success(f"Devotee {new_devotee} added successfully!")
+        else:
+            st.error("Please enter a devotee name.")
+
+# Remove a devotee
+with st.sidebar.expander("Remove Devotee"):
+    remove_devotee = st.selectbox("Select Devotee to Remove", devotees_list)
+    if st.button("Remove Devotee"):
+        conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
+        conn.commit()
+        st.success(f"Devotee {remove_devotee} removed successfully!")
+
+# Rename a devotee
+with st.sidebar.expander("Rename Devotee"):
+    rename_devotee = st.selectbox("Select Devotee to Rename", devotees_list)
+    new_name = st.text_input("New Name")
+    if st.button("Rename Devotee"):
+        if new_name:
+            conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
+            conn.commit()
+            st.success(f"Devotee {rename_devotee} renamed to {new_name} successfully!")
+        else:
+            st.error("Please enter a new name.")
 
 k1,k2 = st.columns(2)
 
@@ -116,13 +144,12 @@ with k1:
 
     # Add new entry to database
     if submit_button:
-        c.execute('''
+        conn.execute('''
         INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
         conn.commit()
         st.balloons()  # Add this line to show balloons after submission
-
 
 # Load data from database
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
