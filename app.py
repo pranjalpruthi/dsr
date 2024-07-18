@@ -12,6 +12,8 @@ conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8
 db_name = "iskm-dsr"
 conn.execute(f"USE DATABASE {db_name}")
 
+
+
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
 layout='wide',)
