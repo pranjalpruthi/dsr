@@ -17,9 +17,9 @@ def get_connection():
 def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_reading_time_min, lecture_time_min, seva_time_min):
     total_rounds = before_7_am_japa_session + before_7_am + from_7_to_9_am + after_9_am
     score_a = min(before_7_am_japa_session * 2.5 + before_7_am * 2 + from_7_to_9_am * 1.5 + after_9_am * 1, 25)
-    score_b = pd.cut([book_reading_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)[0]
-    score_c = pd.cut([lecture_time_min], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)[0]
-    score_d = pd.cut([seva_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)[0]
+    score_b = pd.cut([book_reading_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)[0].item()
+    score_c = pd.cut([lecture_time_min], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)[0].item()
+    score_d = pd.cut([seva_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)[0].item()
     total_score = score_a + score_b + score_c + score_d
     return total_rounds, score_a, score_b, score_c, score_d, total_score
 
