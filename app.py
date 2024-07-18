@@ -3,24 +3,39 @@ import pandas as pd
 from datetime import datetime
 import plotly.express as px
 import random
-import sqlite3
+import psycopg2
+from psycopg2 import sql
 
-st.set_page_config(
-page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
-page_icon="🪖 ",
-layout='wide',)
+# Database connection string
+conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres?sslmode=verify-full&sslrootcert=ca.crt'
 
-# List of fixed devotees
-devotees_list = [
-    "Manu Dasa Prabhu", "Virkrishna das", "Eero-Taisto", "Amaury Prabhu", "Sreekanth", "Luveesh", "Varun prakash",
-    "Krishnavinod Kutty", "Aditya Sharma", "Satyam Sharma", "Debalay Nandi", "Sami Saranpää", "Dmitriy/Dina Krishna Das Prabhu",
-    "Ravi Singh", "Deepanshu Chaudhary", "Aryan Patney", "Gianni Prabhu", "Dharani Bharathi M", "Sai Karthi",
-    "Drona Charan", "Vivek S", "Vivek Hk", "Vikas Prabhu", "Sujay Prabhu", "Pranjal Pruthi", "Pankaj Jalal",
-    "Shivanshu Tewari", "Kallesh Prabhu", "Patita Pâvana dâsa", "Dama Ganga Sujith", "Bhakta Jad", "Sourav Sahoo",
-    "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivranj prabhu", "Subam Barman",
-    "Veron Singh", "Arvindapada Krsna dasa", "Aryan", "Debalay Prabhu", "Drona Prabhu", "Ero-Taisto Prabhu", "Gianni Prabhu", "Krishna Vinod Prabhu",
-    "Mohith Prabhu", "Shubam barman Prabhu"
-]
+# Connect to PostgreSQL database
+def get_connection():
+    return psycopg2.connect(conn_str)
+
+# Initialize PostgreSQL database
+def init_db():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS sadhna_report (
+        DATE DATE,
+        Devotee_Name TEXT,
+        Before_7_am_Japa_Session INTEGER,
+        Before_7_am INTEGER,
+        From_7_to_9_am INTEGER,
+        After_9_am INTEGER,
+        Book_Name TEXT,
+        Book_Reading_Time_Min INTEGER,
+        Lecture_Speaker TEXT,
+        Lecture_Time_Min INTEGER,
+        Seva_Name TEXT,
+        Seva_Time_Min INTEGER
+    )
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # Function to calculate scores
 def calculate_scores(df):
@@ -36,40 +51,86 @@ def calculate_scores(df):
     df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
     return df
 
-# Initialize SQLite database
-conn = sqlite3.connect('sadhna_report.db')
-c = conn.cursor()
-
-# Create table if not exists
-c.execute('''
-CREATE TABLE IF NOT EXISTS sadhna_report (
-    DATE TEXT,
-    Devotee_Name TEXT,
-    Before_7_am_Japa_Session INTEGER,
-    Before_7_am INTEGER,
-    From_7_to_9_am INTEGER,
-    After_9_am INTEGER,
-    Book_Name TEXT,
-    Book_Reading_Time_Min INTEGER,
-    Lecture_Speaker TEXT,
-    Lecture_Time_Min INTEGER,
-    Seva_Name TEXT,
-    Seva_Time_Min INTEGER
-)
-''')
-conn.commit()
+# Initialize database
+init_db()
 
 # Streamlit app
+st.set_page_config(
+    page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
+    page_icon="🪖 ",
+    layout='wide',
+)
+
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
 st.subheader('.💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
-k1,k2 = st.columns(2)
+# Sidebar for managing devotees
+st.sidebar.header("Manage Devotees")
 
+# Load devotees list from database
+def load_devotees():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT Devotee_Name FROM sadhna_report")
+    devotees = [row[0] for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return devotees
+
+# Add devotee
+def add_devotee(devotee_name):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (%s)", (devotee_name,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# Remove devotee
+def remove_devotee(devotee_name):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM sadhna_report WHERE Devotee_Name = %s", (devotee_name,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# Rename devotee
+def rename_devotee(old_name, new_name):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE sadhna_report SET Devotee_Name = %s WHERE Devotee_Name = %s", (new_name, old_name))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# Sidebar options
+devotees_list = load_devotees()
+with st.sidebar.expander("Add Devotee"):
+    new_devotee = st.text_input("New Devotee Name")
+    if st.button("Add Devotee"):
+        add_devotee(new_devotee)
+        st.experimental_rerun()
+
+with st.sidebar.expander("Remove Devotee"):
+    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotees_list)
+    if st.button("Remove Devotee"):
+        remove_devotee(remove_devotee_name)
+        st.experimental_rerun()
+
+with st.sidebar.expander("Rename Devotee"):
+    old_devotee_name = st.selectbox("Select Devotee to Rename", devotees_list)
+    new_devotee_name = st.text_input("New Devotee Name")
+    if st.button("Rename Devotee"):
+        rename_devotee(old_devotee_name, new_devotee_name)
+        st.experimental_rerun()
+
+# Form for input
+k1, k2 = st.columns(2)
 with k1:
-    # Form for input
     with st.form(key='sadhna_form'):
         st.header('📝 Fill Your Daily Sadhna Report 📿')
         
@@ -116,52 +177,51 @@ with k1:
 
     # Add new entry to database
     if submit_button:
-        c.execute('''
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute('''
         INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
         conn.commit()
-        st.balloons()  # Add this line to show balloons after submission
-
+        cur.close()
+        conn.close()
+        st.balloons()
 
 # Load data from database
+conn = get_connection()
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
-
-# Print column names to debug
-#st.write("Columns in DataFrame:", df.columns.tolist())
+conn.close()
 
 df = calculate_scores(df)
 
 with k2:
     # List of video URLs from your YouTube channel
     video_urls = [
-    "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
-    "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
-    "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
-    "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
-    "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
-        "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX" ,
+        "https://youtube.com/watch?v=ll_rOl6oZbQ?si=t_EOYhp542llr3D4",
+        "https://youtube.com/watch?v=yrx2YqyGs-E?si=AWqM94qUH8tyeh1H", 
+        "https://youtube.com/watch?v=cgXjcaU2TOU?si=NtDwyihIR9gB-gVo", 
+        "https://youtube.com/watch?v=SFrZd99l7gk?si=KgKodnT15zCumPPG", 
+        "https://youtube.com/watch?v=9f-Aa-2fVqk?si=jJheFntrqEtkjBEh", 
+        "https://youtu.be/O8nsZZ8Z-6g?si=YrHfuyupboqYBofX",
         "https://youtube.com/watch?v=yhWTbP1DAjA?si=Mp_JixZG8c4fCFzk",
         "https://youtu.be/0utP6oLxnT0?si=kEUTHiA78CUCOyx2",
         "https://youtu.be/fyBcO6ilyjw?si=MfYiezOlTZwSUn_4",
         "https://youtu.be/rmPLHbBbUzA?si=bJgrk6aIIe7CuR6p",
         "https://youtu.be/bZOlGRyknXM?si=70vbuytkjhKvN8fg",
         "https://youtu.be/PYtA10m_DBU?si=RyuduxsMf1oZ0FSQ"
-        # Add more video URLs as needed
     ]
 
     # Select a random video URL
     random_video_url = random.choice(video_urls)
 
-with k2:
     st.subheader('🪄📺')
     st.video(random_video_url)
 
-c1,c2 = st.columns(2)
+c1, c2 = st.columns(2)
 
 # Statistics
 if not df.empty:
-
     with c1:
         # Top 10 devotees weekly
         top_10_weekly = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
