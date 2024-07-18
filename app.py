@@ -10,32 +10,6 @@ page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
 layout='wide',)
 
-# List of fixed devotees
-devotees_list = [
-    "Manu Dasa Prabhu", "Virkrishna das", "Eero-Taisto", "Amaury Prabhu", "Sreekanth", "Luveesh", "Varun prakash",
-    "Krishnavinod Kutty", "Aditya Sharma", "Satyam Sharma", "Debalay Nandi", "Sami Saranpää", "Dmitriy/Dina Krishna Das Prabhu",
-    "Ravi Singh", "Deepanshu Chaudhary", "Aryan Patney", "Gianni Prabhu", "Dharani Bharathi M", "Sai Karthi",
-    "Drona Charan", "Vivek S", "Vivek Hk", "Vikas Prabhu", "Sujay Prabhu", "Pranjal Pruthi", "Pankaj Jalal",
-    "Shivanshu Tewari", "Kallesh Prabhu", "Patita Pâvana dâsa", "Dama Ganga Sujith", "Bhakta Jad", "Sourav Sahoo",
-    "Aditya Sree Kumar", "Mohith", "Pradheshwar Prabhu", "Privansh Prabhu", "Shivrani prabhu", "Subam Barman",
-    "Veron Singh", "Arvindapada Krsna dasa", "Aryan", "Debalay Prabhu", "Drona Prabhu", "Ero-Taisto Prabhu", "Gianni Prabhu", "Krishna Vinod Prabhu",
-    "Mohith Prabhu", "Shubam barman Prabhu"
-]
-
-# Function to calculate scores
-def calculate_scores(df):
-    df['Total Rounds'] = df['Before_7_am_Japa_Session'] + df['Before_7_am'] + df['From_7_to_9_am'] + df['After_9_am']
-    df['Score (A)'] = (df['Before_7_am_Japa_Session'] * 2.5 + df['Before_7_am'] * 2 + df['From_7_to_9_am'] * 1.5 + df['After_9_am'] * 1).clip(upper=25)
-    df['Score (B)'] = pd.cut(df['Book_Reading_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
-    df['Score (C)'] = pd.cut(df['Lecture_Time_Min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
-    df['Score (D)'] = pd.cut(df['Seva_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
-    df['Total Score (A+B+C+D)'] = df['Score (A)'] + df['Score (B)'] + df['Score (C)'] + df['Score (D)']
-    df['DATE'] = pd.to_datetime(df['DATE'])  # Ensure DATE column is in datetime format
-    df['Monthly'] = df['DATE'].dt.to_period('M')
-    df['Weekly'] = df['DATE'].dt.to_period('W')
-    df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
-    return df
-
 # Initialize SQLite database
 conn = sqlite3.connect('sadhna_report.db')
 c = conn.cursor()
@@ -58,6 +32,81 @@ CREATE TABLE IF NOT EXISTS sadhna_report (
 )
 ''')
 conn.commit()
+
+# Function to calculate scores
+def calculate_scores(df):
+    df['Total Rounds'] = df['Before_7_am_Japa_Session'] + df['Before_7_am'] + df['From_7_to_9_am'] + df['After_9_am']
+    df['Score (A)'] = (df['Before_7_am_Japa_Session'] * 2.5 + df['Before_7_am'] * 2 + df['From_7_to_9_am'] * 1.5 + df['After_9_am'] * 1).clip(upper=25)
+    df['Score (B)'] = pd.cut(df['Book_Reading_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
+    df['Score (C)'] = pd.cut(df['Lecture_Time_Min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
+    df['Score (D)'] = pd.cut(df['Seva_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
+    df['Total Score (A+B+C+D)'] = df['Score (A)'] + df['Score (B)'] + df['Score (C)'] + df['Score (D)']
+    df['DATE'] = pd.to_datetime(df['DATE'])  # Ensure DATE column is in datetime format
+    df['Monthly'] = df['DATE'].dt.to_period('M')
+    df['Weekly'] = df['DATE'].dt.to_period('W')
+    df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+    return df
+
+# Function to add a devotee
+def add_devotee(devotee_name):
+    c.execute('INSERT INTO devotees (Devotee_Name) VALUES (?)', (devotee_name,))
+    conn.commit()
+
+# Function to remove a devotee
+def remove_devotee(devotee_name):
+    c.execute('DELETE FROM devotees WHERE Devotee_Name = ?', (devotee_name,))
+    conn.commit()
+
+# Function to rename a devotee
+def rename_devotee(old_name, new_name):
+    c.execute('UPDATE devotees SET Devotee_Name = ? WHERE Devotee_Name = ?', (new_name, old_name))
+    conn.commit()
+
+# Create devotees table if not exists
+c.execute('''
+CREATE TABLE IF NOT EXISTS devotees (
+    Devotee_Name TEXT PRIMARY KEY
+)
+''')
+conn.commit()
+
+# Load devotees from database
+devotees_list = [row[0] for row in c.execute('SELECT Devotee_Name FROM devotees').fetchall()]
+
+# Sidebar for managing devotees
+with st.sidebar:
+    st.header("Manage Devotees")
+    
+    with st.expander("Show Devotees"):
+        st.write(devotees_list)
+    
+    st.subheader("Add Devotee")
+    new_devotee = st.text_input("New Devotee Name")
+    if st.button("Add Devotee"):
+        if new_devotee:
+            add_devotee(new_devotee)
+            st.success(f"Devotee '{new_devotee}' added.")
+        else:
+            st.error("Please enter a name.")
+    
+    st.subheader("Remove Devotee")
+    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotees_list)
+    if st.button("Remove Devotee"):
+        if remove_devotee_name:
+            remove_devotee(remove_devotee_name)
+            st.success(f"Devotee '{remove_devotee_name}' removed.")
+        else:
+            st.error("Please select a devotee.")
+    
+    st.subheader("Rename Devotee")
+    old_devotee_name = st.selectbox("Select Devotee to Rename", devotees_list)
+    new_devotee_name = st.text_input("New Devotee Name")
+    if st.button("Rename Devotee"):
+        if old_devotee_name and new_devotee_name:
+            rename_devotee(old_devotee_name, new_devotee_name)
+            st.success(f"Devotee '{old_devotee_name}' renamed to '{new_devotee_name}'.")
+        else:
+            st.error("Please select a devotee and enter a new name.")
 
 # Streamlit app
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
@@ -122,7 +171,6 @@ with k1:
         ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
         conn.commit()
         st.balloons()  # Add this line to show balloons after submission
-
 
 # Load data from database
 df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
