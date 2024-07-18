@@ -4,14 +4,12 @@ from datetime import datetime
 import plotly.express as px
 import random
 import sqlitecloud
-from sqlalchemy import create_engine
 
 # Read the API key from secrets
 api_key = st.secrets["sqlitecloud"]["apikey"]
 
 # Create SQLite Cloud connection
 conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
-
 # Create SQLAlchemy engine
 engine = create_engine(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
 
