@@ -18,10 +18,14 @@ def init_db():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute('''
-    DROP TABLE IF EXISTS sadhna_report;
-    CREATE TABLE sadhna_report (
+    CREATE TABLE IF NOT EXISTS devotees (
+        devotee_id SERIAL PRIMARY KEY,
+        devotee_name TEXT UNIQUE NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS sadhna_report (
+        record_id SERIAL PRIMARY KEY,
+        devotee_id INTEGER REFERENCES devotees(devotee_id),
         date DATE,
-        devotee_name TEXT UNIQUE,
         before_7_am_japa_session INTEGER,
         before_7_am INTEGER,
         from_7_to_9_am INTEGER,
@@ -38,7 +42,7 @@ def init_db():
         score_c INTEGER,
         score_d INTEGER,
         total_score INTEGER
-    )
+    );
     ''')
     conn.commit()
     cur.close()
@@ -77,8 +81,8 @@ st.sidebar.header("Manage Devotees")
 def load_devotees():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT devotee_name FROM sadhna_report")
-    devotees = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT devotee_id, devotee_name FROM devotees")
+    devotees = cur.fetchall()
     cur.close()
     conn.close()
     return devotees
@@ -87,31 +91,34 @@ def load_devotees():
 def add_devotee(devotee_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO sadhna_report (devotee_name) VALUES (%s)", (devotee_name,))
+    cur.execute("INSERT INTO devotees (devotee_name) VALUES (%s) ON CONFLICT (devotee_name) DO NOTHING", (devotee_name,))
     conn.commit()
     cur.close()
     conn.close()
 
 # Remove devotee
-def remove_devotee(devotee_name):
+def remove_devotee(devotee_id):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM sadhna_report WHERE devotee_name = %s", (devotee_name,))
+    cur.execute("DELETE FROM devotees WHERE devotee_id = %s", (devotee_id,))
     conn.commit()
     cur.close()
     conn.close()
 
 # Rename devotee
-def rename_devotee(old_name, new_name):
+def rename_devotee(devotee_id, new_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE sadhna_report SET devotee_name = %s WHERE devotee_name = %s", (new_name, old_name))
+    cur.execute("UPDATE devotees SET devotee_name = %s WHERE devotee_id = %s", (new_name, devotee_id))
     conn.commit()
     cur.close()
     conn.close()
 
 # Sidebar options
 devotees_list = load_devotees()
+devotee_names = [devotee[1] for devotee in devotees_list]
+devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
+
 with st.sidebar.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name", key="new_devotee")
     if st.button("Add Devotee", key="add_devotee_button"):
@@ -119,16 +126,16 @@ with st.sidebar.expander("Add Devotee"):
         st.experimental_rerun()
 
 with st.sidebar.expander("Remove Devotee"):
-    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotees_list, key="remove_devotee")
+    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
     if st.button("Remove Devotee", key="remove_devotee_button"):
-        remove_devotee(remove_devotee_name)
+        remove_devotee(devotee_ids[remove_devotee_name])
         st.experimental_rerun()
 
 with st.sidebar.expander("Rename Devotee"):
-    old_devotee_name = st.selectbox("Select Devotee to Rename", devotees_list, key="old_devotee")
+    old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
     new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
     if st.button("Rename Devotee", key="rename_devotee_button"):
-        rename_devotee(old_devotee_name, new_devotee_name)
+        rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
         st.experimental_rerun()
 
 # Form for input
@@ -142,7 +149,7 @@ with k1:
         with col1:
             date = st.date_input('📅 Date', value=datetime.today(), key="date_input")
         with col2:
-            devotee_name = st.selectbox('🙏 Devotee Name', devotees_list, key="devotee_name_input")
+            devotee_name = st.selectbox('🙏 Devotee Name', devotee_names, key="devotee_name_input")
         
         # Japa Sessions
         col3, col4, col5, col6 = st.columns(4)
@@ -180,13 +187,14 @@ with k1:
 
     # Add new entry to database
     if submit_button:
+        devotee_id = devotee_ids[devotee_name]
         total_rounds, score_a, score_b, score_c, score_d, total_score = calculate_scores(before_7am_japa, before_7am, from_7_to_9am, after_9am, book_reading_time, lecture_time, seva_time)
         conn = get_connection()
         cur = conn.cursor()
         cur.execute('''
-        INSERT INTO sadhna_report (date, devotee_name, before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_name, book_reading_time_min, lecture_speaker, lecture_time_min, seva_name, seva_time_min, total_rounds, score_a, score_b, score_c, score_d, total_score)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time, total_rounds, score_a, score_b, score_c, score_d, total_score))
+        INSERT INTO sadhna_report (devotee_id, date, before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_name, book_reading_time_min, lecture_speaker, lecture_time_min, seva_name, seva_time_min, total_rounds, score_a, score_b, score_c, score_d, total_score)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (devotee_id, date, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time, total_rounds, score_a, score_b, score_c, score_d, total_score))
         conn.commit()
         cur.close()
         conn.close()
@@ -194,7 +202,11 @@ with k1:
 
 # Load data from database
 conn = get_connection()
-df = pd.read_sql_query('SELECT * FROM sadhna_report', conn)
+df = pd.read_sql_query('''
+SELECT sr.*, d.devotee_name 
+FROM sadhna_report sr
+JOIN devotees d ON sr.devotee_id = d.devotee_id
+''', conn)
 conn.close()
 
 # Ensure date column is in datetime format
