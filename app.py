@@ -5,14 +5,15 @@ import plotly.express as px
 import random
 import sqlitecloud
 
+# Read the API key from secrets
+api_key = st.secrets["sqlitecloud"]["apikey"]
+
 # Connect to SQLite Cloud
-conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600")
+conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey={api_key}")
 
 # Use the existing database
 db_name = "iskm-dsr"
 conn.execute(f"USE DATABASE {db_name}")
-
-
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
