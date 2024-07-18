@@ -19,18 +19,18 @@ def init_db():
     cur = conn.cursor()
     cur.execute('''
     CREATE TABLE IF NOT EXISTS sadhna_report (
-        DATE DATE,
-        Devotee_Name TEXT UNIQUE,
-        Before_7_am_Japa_Session INTEGER,
-        Before_7_am INTEGER,
-        From_7_to_9_am INTEGER,
-        After_9_am INTEGER,
-        Book_Name TEXT,
-        Book_Reading_Time_Min INTEGER,
-        Lecture_Speaker TEXT,
-        Lecture_Time_Min INTEGER,
-        Seva_Name TEXT,
-        Seva_Time_Min INTEGER
+        date DATE,
+        devotee_name TEXT UNIQUE,
+        before_7_am_japa_session INTEGER,
+        before_7_am INTEGER,
+        from_7_to_9_am INTEGER,
+        after_9_am INTEGER,
+        book_name TEXT,
+        book_reading_time_min INTEGER,
+        lecture_speaker TEXT,
+        lecture_time_min INTEGER,
+        seva_name TEXT,
+        seva_time_min INTEGER
     )
     ''')
     conn.commit()
@@ -39,15 +39,15 @@ def init_db():
 
 # Function to calculate scores
 def calculate_scores(df):
-    df['Total Rounds'] = df['Before_7_am_Japa_Session'] + df['Before_7_am'] + df['From_7_to_9_am'] + df['After_9_am']
-    df['Score (A)'] = (df['Before_7_am_Japa_Session'] * 2.5 + df['Before_7_am'] * 2 + df['From_7_to_9_am'] * 1.5 + df['After_9_am'] * 1).clip(upper=25)
-    df['Score (B)'] = pd.cut(df['Book_Reading_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
-    df['Score (C)'] = pd.cut(df['Lecture_Time_Min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
-    df['Score (D)'] = pd.cut(df['Seva_Time_Min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
+    df['Total Rounds'] = df['before_7_am_japa_session'] + df['before_7_am'] + df['from_7_to_9_am'] + df['after_9_am']
+    df['Score (A)'] = (df['before_7_am_japa_session'] * 2.5 + df['before_7_am'] * 2 + df['from_7_to_9_am'] * 1.5 + df['after_9_am'] * 1).clip(upper=25)
+    df['Score (B)'] = pd.cut(df['book_reading_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 7, 15, 20, 25, 30], ordered=False).astype(int)
+    df['Score (C)'] = pd.cut(df['lecture_time_min'], bins=[-1, 15, 30, 45, float('inf')], labels=[7, 15, 20, 30], ordered=False).astype(int)
+    df['Score (D)'] = pd.cut(df['seva_time_min'], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 14, 15], ordered=False).astype(int)
     df['Total Score (A+B+C+D)'] = df['Score (A)'] + df['Score (B)'] + df['Score (C)'] + df['Score (D)']
-    df['DATE'] = pd.to_datetime(df['DATE'])  # Ensure DATE column is in datetime format
-    df['Monthly'] = df['DATE'].dt.to_period('M')
-    df['Weekly'] = df['DATE'].dt.to_period('W')
+    df['date'] = pd.to_datetime(df['date'])  # Ensure date column is in datetime format
+    df['Monthly'] = df['date'].dt.to_period('M')
+    df['Weekly'] = df['date'].dt.to_period('W')
     df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
     return df
 
@@ -74,7 +74,7 @@ st.sidebar.header("Manage Devotees")
 def load_devotees():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT Devotee_Name FROM sadhna_report")
+    cur.execute("SELECT DISTINCT devotee_name FROM sadhna_report")
     devotees = [row[0] for row in cur.fetchall()]
     cur.close()
     conn.close()
@@ -84,7 +84,7 @@ def load_devotees():
 def add_devotee(devotee_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (%s)", (devotee_name,))
+    cur.execute("INSERT INTO sadhna_report (devotee_name) VALUES (%s)", (devotee_name,))
     conn.commit()
     cur.close()
     conn.close()
@@ -93,7 +93,7 @@ def add_devotee(devotee_name):
 def remove_devotee(devotee_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM sadhna_report WHERE Devotee_Name = %s", (devotee_name,))
+    cur.execute("DELETE FROM sadhna_report WHERE devotee_name = %s", (devotee_name,))
     conn.commit()
     cur.close()
     conn.close()
@@ -102,7 +102,7 @@ def remove_devotee(devotee_name):
 def rename_devotee(old_name, new_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE sadhna_report SET Devotee_Name = %s WHERE Devotee_Name = %s", (new_name, old_name))
+    cur.execute("UPDATE sadhna_report SET devotee_name = %s WHERE devotee_name = %s", (new_name, old_name))
     conn.commit()
     cur.close()
     conn.close()
@@ -180,7 +180,7 @@ with k1:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute('''
-        INSERT INTO sadhna_report (DATE, Devotee_Name, Before_7_am_Japa_Session, Before_7_am, From_7_to_9_am, After_9_am, Book_Name, Book_Reading_Time_Min, Lecture_Speaker, Lecture_Time_Min, Seva_Name, Seva_Time_Min)
+        INSERT INTO sadhna_report (date, devotee_name, before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_name, book_reading_time_min, lecture_speaker, lecture_time_min, seva_name, seva_time_min)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
         conn.commit()
@@ -224,13 +224,13 @@ c1, c2 = st.columns(2)
 if not df.empty:
     with c1:
         # Top 10 devotees weekly
-        top_10_weekly = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        top_10_weekly = df.groupby(['Formatted_Weekly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
         top_10_weekly = top_10_weekly.sort_values(by=['Formatted_Weekly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Formatted_Weekly').head(10)
         st.write("🏅 Top 10 Devotees Weekly")
         st.dataframe(top_10_weekly, hide_index=True)
 
         # Most favorite book of the week
-        favorite_book_weekly = df.groupby(['Formatted_Weekly', 'Book_Name'])['Book_Name'].count().reset_index(name='count')
+        favorite_book_weekly = df.groupby(['Formatted_Weekly', 'book_name'])['book_name'].count().reset_index(name='count')
         favorite_book_weekly = favorite_book_weekly.sort_values(by=['Formatted_Weekly', 'count'], ascending=[True, False]).groupby('Formatted_Weekly').head(1)
         st.write("📚 Most Favorite Book of the Week")
         st.dataframe(favorite_book_weekly, hide_index=True)
@@ -238,11 +238,11 @@ if not df.empty:
         # Devotee of the Week
         devotee_of_week = top_10_weekly.groupby('Formatted_Weekly').first().reset_index()
         st.write("🌟 Devotee of the Week")
-        st.dataframe(devotee_of_week[['Formatted_Weekly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+        st.dataframe(devotee_of_week[['Formatted_Weekly', 'devotee_name', 'Total Score (A+B+C+D)']], hide_index=True)
 
     with c2:
         # Top 10 devotees monthly
-        top_10_monthly = df.groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        top_10_monthly = df.groupby(['Monthly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
         top_10_monthly = top_10_monthly.sort_values(by=['Monthly', 'Total Score (A+B+C+D)'], ascending=[True, False]).groupby('Monthly').head(10)
         st.write("🏆 Top 10 Devotees Monthly")
         st.dataframe(top_10_monthly, hide_index=True)
@@ -250,10 +250,10 @@ if not df.empty:
         # Devotee of the Month
         devotee_of_month = top_10_monthly.groupby('Monthly').first().reset_index()
         st.write("🌟 Devotee of the Month")
-        st.dataframe(devotee_of_month[['Monthly', 'Devotee_Name', 'Total Score (A+B+C+D)']], hide_index=True)
+        st.dataframe(devotee_of_month[['Monthly', 'devotee_name', 'Total Score (A+B+C+D)']], hide_index=True)
 
         # Weekly intermediate devotees requiring spiritual guidance
-        intermediate_devotees = df.groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
         intermediate_devotees = intermediate_devotees[(intermediate_devotees['Total Score (A+B+C+D)'] > 0) & (intermediate_devotees['Total Score (A+B+C+D)'] < 50)]
         st.write("🧘‍♂️ Weekly Intermediate Devotees Requiring Spiritual Guidance")
         st.dataframe(intermediate_devotees, hide_index=True)
@@ -265,8 +265,8 @@ if not df.empty:
         selected_weeks = st.multiselect('Select Weeks', options=df['Formatted_Weekly'].unique(), default=df['Formatted_Weekly'].unique(), key="weekly_multiselect")
 
         # Filter data based on selected weeks
-        weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_weekly = px.bar(weekly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
+        weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        fig_weekly = px.bar(weekly_chart, x='devotee_name', y='Total Score (A+B+C+D)', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
         st.plotly_chart(fig_weekly)
 
     with c2:
@@ -276,8 +276,8 @@ if not df.empty:
         selected_months = st.multiselect('Select Months', options=df['Monthly'].unique(), default=df['Monthly'].unique(), key="monthly_multiselect")
 
         # Filter data based on selected months
-        monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'Devotee_Name'])['Total Score (A+B+C+D)'].sum().reset_index()
-        fig_monthly = px.bar(monthly_chart, x='Devotee_Name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
+        monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'devotee_name'])['Total Score (A+B+C+D)'].sum().reset_index()
+        fig_monthly = px.bar(monthly_chart, x='devotee_name', y='Total Score (A+B+C+D)', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
         st.plotly_chart(fig_monthly)
 
 # Display data
