@@ -4,20 +4,18 @@ from datetime import datetime
 import plotly.express as px
 import random
 import sqlite3
+import sqlitecloud
 
-# Read the API key from secrets
 api_key = st.secrets["sqlitecloud"]["apikey"]
 
-# Create SQLite connection
-conn = sqlite3.connect(f"file:ceawv3muiz.sqlite.cloud?mode=ro&apikey={api_key}", uri=True)
-
-# Use the existing database
-db_name = "iskm-dsr"
-conn.execute(f"ATTACH DATABASE '{db_name}' AS db")
+# Create SQLite Cloud connection
+conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
 page_icon="🪖 ",
 layout='wide',)
+
+
 
 # Function to calculate scores
 def calculate_scores(df):
