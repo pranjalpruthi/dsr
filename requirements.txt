@@ -4,3 +4,4 @@ plotly
 plotly_express
 sqlitecloud
 sqlalchemy
+psycopg2-binary==2.9
