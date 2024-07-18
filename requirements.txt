@@ -3,3 +3,4 @@ pandas
 plotly
 plotly_express
 sqlitecloud
+sqlalchemy
