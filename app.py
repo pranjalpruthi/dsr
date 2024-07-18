@@ -7,7 +7,10 @@ import sqlitecloud
 
 # Connect to SQLite Cloud
 conn = sqlitecloud.connect("sqlitecloud://ceawv3muiz.sqlite.cloud:8860?apikey=R8vuOMP2tUvZobGz9nlFTdaKybPvAMTHibb0M52o600")
+
+# Create the database if it doesn't exist
 db_name = "sadhna_report"
+conn.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
 conn.execute(f"USE DATABASE {db_name}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
