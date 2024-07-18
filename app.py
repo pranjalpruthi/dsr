@@ -10,8 +10,6 @@ api_key = st.secrets["sqlitecloud"]["apikey"]
 
 # Create SQLite Cloud connection
 conn = sqlitecloud.connect(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
-# Create SQLAlchemy engine
-engine = create_engine(f"sqlitecloud://ceawv3muiz.sqlite.cloud:8860/iskm-dsr?apikey={api_key}")
 
 st.set_page_config(page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
                    page_icon="🪖 ",
