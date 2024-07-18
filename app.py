@@ -52,10 +52,12 @@ with st.sidebar.expander("Add Devotee"):
         if new_devotee:
             try:
                 # Assuming other columns can be NULL or have default values
-                conn.execute("INSERT INTO sadhna_report (Devotee_Name) VALUES (?)", (new_devotee,))
+                # Provide a default date value to satisfy the NOT NULL constraint
+                default_date = datetime.today().strftime('%Y-%m-%d')
+                conn.execute("INSERT INTO sadhna_report (Devotee_Name, DATE) VALUES (?, ?)", (new_devotee, default_date))
                 conn.commit()
                 st.success(f"Devotee {new_devotee} added successfully!")
-            except sqlitecloud.SQLiteCloudException as e:
+            except Exception as e:
                 st.error(f"Error adding devotee: {e}")
         else:
             st.error("Please enter a devotee name.")
@@ -68,7 +70,7 @@ with st.sidebar.expander("Remove Devotee"):
             conn.execute("DELETE FROM sadhna_report WHERE Devotee_Name = ?", (remove_devotee,))
             conn.commit()
             st.success(f"Devotee {remove_devotee} removed successfully!")
-        except sqlitecloud.SQLiteCloudException as e:
+        except Exception as e:
             st.error(f"Error removing devotee: {e}")
 
 # Rename a devotee
@@ -81,7 +83,7 @@ with st.sidebar.expander("Rename Devotee"):
                 conn.execute("UPDATE sadhna_report SET Devotee_Name = ? WHERE Devotee_Name = ?", (new_name, rename_devotee))
                 conn.commit()
                 st.success(f"Devotee {rename_devotee} renamed to {new_name} successfully!")
-            except sqlitecloud.SQLiteCloudException as e:
+            except Exception as e:
                 st.error(f"Error renaming devotee: {e}")
         else:
             st.error("Please enter a new name.")
@@ -143,7 +145,7 @@ with k1:
             ''', (date, devotee_name, before_7am_japa, before_7am, from_7_to_9am, after_9am, book_name, book_reading_time, lecture_speaker, lecture_time, seva_name, seva_time))
             conn.commit()
             st.balloons()  # Add this line to show balloons after submission
-        except sqlitecloud.SQLiteCloudException as e:
+        except Exception as e:
             st.error(f"Error submitting report: {e}")
 
 # Load data from database
