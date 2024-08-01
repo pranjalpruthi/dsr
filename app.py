@@ -77,6 +77,13 @@ def rename_devotee(devotee_id, new_name):
     cur.close()
     conn.close()
 
+# Add this function at the beginning of your script, after the database connection
+def load_reports():
+    reports = conn.execute("SELECT id, DATE, Devotee_Name FROM sadhna_report ORDER BY DATE DESC").fetchall()
+    return reports
+
+
+
 # Sidebar options
 devotees_list = load_devotees()
 devotee_names = [devotee[1] for devotee in devotees_list]
@@ -106,6 +113,21 @@ with st.sidebar.expander("Show All Devotees"):
     for name in devotee_names:
         st.write(f"- {name}")
 
+# Add this in the sidebar section of your script
+with st.sidebar.expander("Remove Report"):
+    reports = load_reports()
+    report_options = [f"ID: {report[0]} - Date: {report[1]} - Devotee: {report[2]}" for report in reports]
+    selected_report = st.selectbox("Select Report to Remove", report_options)
+    
+    if st.button("Remove Selected Report"):
+        if selected_report:
+            report_id = int(selected_report.split(' - ')[0].split(': ')[1])
+            conn.execute("DELETE FROM sadhna_report WHERE id = ?", (report_id,))
+            conn.commit()
+            st.success(f"Report (ID: {report_id}) removed successfully!")
+            st.experimental_rerun()  # Rerun the app to refresh the data
+        else:
+            st.error("Please select a report to remove.")
 
 # Form for input
 k1, k2 = st.columns(2)
