@@ -13,8 +13,6 @@ conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data
 def get_connection():
     return psycopg2.connect(conn_str)
 
-
-
 # Function to calculate scores
 def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_reading_time_min, lecture_time_min, seva_time_min):
     total_rounds = before_7_am_japa_session + before_7_am + from_7_to_9_am + after_9_am
@@ -24,6 +22,7 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
     score_d = pd.cut([seva_time_min], bins=[-1, 1, 15, 30, 45, 60, float('inf')], labels=[0, 5, 8, 12, 15, 15], ordered=False).astype(int)[0].item()
     total_score = score_a + score_b + score_c + score_d
     return total_rounds, score_a, score_b, score_c, score_d, total_score
+
 # Streamlit app
 st.set_page_config(
     page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
@@ -77,15 +76,14 @@ def rename_devotee(devotee_id, new_name):
     cur.close()
     conn.close()
 
-def delete_report(report_id):
+# Remove report by ID
+def remove_report(report_id):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM sadhna_report WHERE id = %s", (report_id,))
     conn.commit()
     cur.close()
     conn.close()
-
-
 
 # Sidebar options
 devotees_list = load_devotees()
@@ -117,26 +115,10 @@ with st.sidebar.expander("Show All Devotees"):
         st.write(f"- {name}")
 
 with st.sidebar.expander("Remove Report"):
-    # Get all report IDs and corresponding information
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, date, devotee_name FROM sadhna_report JOIN devotees ON sadhna_report.devotee_id = devotees.devotee_id ORDER BY date DESC")
-    reports = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    # Create a list of options for the selectbox
-    report_options = [f"ID: {r[0]} - Date: {r[1]} - Devotee: {r[2]}" for r in reports]
-    
-    selected_report = st.selectbox("Select Report to Remove", report_options)
-    
-    if st.button("Remove Selected Report"):
-        report_id = int(selected_report.split(" - ")[0].split(":")[1].strip())
-        delete_report(report_id)
-        st.success(f"Report (ID: {report_id}) has been removed.")
+    report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
+    if st.button("Remove Report", key="remove_report_button"):
+        remove_report(report_id)
         st.experimental_rerun()
-
-
 
 # Form for input
 k1, k2 = st.columns(2)
