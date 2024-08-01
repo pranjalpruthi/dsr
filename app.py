@@ -13,6 +13,8 @@ conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data
 def get_connection():
     return psycopg2.connect(conn_str)
 
+
+
 # Function to calculate scores
 def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, after_9_am, book_reading_time_min, lecture_time_min, seva_time_min):
     total_rounds = before_7_am_japa_session + before_7_am + from_7_to_9_am + after_9_am
@@ -98,6 +100,12 @@ with st.sidebar.expander("Rename Devotee"):
     if st.button("Rename Devotee", key="rename_devotee_button"):
         rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
         st.experimental_rerun()
+
+with st.sidebar.expander("Show All Devotees"):
+    st.write("List of all devotees:")
+    for name in devotee_names:
+        st.write(f"- {name}")
+
 
 # Form for input
 k1, k2 = st.columns(2)
