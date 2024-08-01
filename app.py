@@ -77,6 +77,15 @@ def rename_devotee(devotee_id, new_name):
     cur.close()
     conn.close()
 
+def delete_report(report_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM sadhna_report WHERE id = %s", (report_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 
 # Sidebar options
 devotees_list = load_devotees()
@@ -106,6 +115,27 @@ with st.sidebar.expander("Show All Devotees"):
     st.write("List of all devotees:")
     for name in devotee_names:
         st.write(f"- {name}")
+
+with st.sidebar.expander("Remove Report"):
+    # Get all report IDs and corresponding information
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, date, devotee_name FROM sadhna_report JOIN devotees ON sadhna_report.devotee_id = devotees.devotee_id ORDER BY date DESC")
+    reports = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    # Create a list of options for the selectbox
+    report_options = [f"ID: {r[0]} - Date: {r[1]} - Devotee: {r[2]}" for r in reports]
+    
+    selected_report = st.selectbox("Select Report to Remove", report_options)
+    
+    if st.button("Remove Selected Report"):
+        report_id = int(selected_report.split(" - ")[0].split(":")[1].strip())
+        delete_report(report_id)
+        st.success(f"Report (ID: {report_id}) has been removed.")
+        st.experimental_rerun()
+
 
 
 # Form for input
