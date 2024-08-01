@@ -80,10 +80,10 @@ def rename_devotee(devotee_id, new_name):
 
 
 
-def remove_report(from django.contrib import admin):
+def remove_report(id):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
+    cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id))
     conn.commit()
     cur.close()
     conn.close()
