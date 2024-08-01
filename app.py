@@ -77,10 +77,13 @@ def rename_devotee(devotee_id, new_name):
     conn.close()
 
 # Remove report by ID
-def remove_report(report_id):
+
+
+
+def remove_report(from django.contrib import admin):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM sadhna_report WHERE id = %s", (report_id,))
+    cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -119,6 +122,9 @@ with st.sidebar.expander("Remove Report"):
     if st.button("Remove Report", key="remove_report_button"):
         remove_report(report_id)
         st.experimental_rerun()
+
+
+
 
 # Form for input
 k1, k2 = st.columns(2)
@@ -293,3 +299,4 @@ if not df.empty:
 # Display data
 st.subheader('📊 Sadhna Data')
 st.dataframe(df, hide_index=True)
+
