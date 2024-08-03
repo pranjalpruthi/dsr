@@ -8,7 +8,6 @@ from psycopg2 import sql
 from datetime import datetime, timedelta
 import streamlit_shadcn_ui as ui
 
-
 # Database connection string
 conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
 
@@ -35,13 +34,45 @@ st.set_page_config(
 
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
+# Load data from database
+conn = get_connection()
+df = pd.read_sql_query('''
+SELECT sr.*, d.devotee_name 
+FROM sadhna_report sr 
+JOIN devotees d ON sr.devotee_id = d.devotee_id
+''', conn)
+conn.close()
+
+# Ensure date column is in datetime format
+df['date'] = pd.to_datetime(df['date'])
+
+# Calculate weekly and monthly periods
+df['Monthly'] = df['date'].dt.to_period('M')
+df['Weekly'] = df['date'].dt.to_period('W')
+df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+
+# Calculate metrics
+current_date = datetime.now().date()
+start_of_week = current_date - timedelta(days=current_date.weekday())
+current_week_data = df[df['date'].dt.date >= start_of_week]
+num_reports_this_week = current_week_data.shape[0]
+total_devotees = len(devotee_names)
+intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
+intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
+num_intermediate_devotees = intermediate_devotees.shape[0]
+
+# Display metrics using metric cards
+cols = st.columns(3)
+with cols[0]:
+    ui.metric_card(title="📅 Reports This Week", content=f"{num_reports_this_week}", description="Number of reports submitted this week", key="reports_this_week")
+with cols[1]:
+    ui.metric_card(title="🙏 Total Devotees", content=f"{total_devotees}", description="Total number of devotees", key="total_devotees")
+with cols[2]:
+    ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
+
 st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
-
-
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
-
-
 
 # Sidebar for managing devotees
 st.sidebar.header("Manage Devotees")
@@ -84,8 +115,6 @@ def rename_devotee(devotee_id, new_name):
     conn.close()
 
 # Remove report by ID
-
-
 def remove_report(id):
     conn = None
     cur = None
@@ -102,7 +131,6 @@ def remove_report(id):
             cur.close()
         if conn:
             conn.close()
-
 
 # Sidebar options
 devotees_list = load_devotees()
@@ -138,9 +166,6 @@ with st.sidebar.expander("Remove Report"):
     if st.button("Remove Report", key="remove_report_button"):
         remove_report(report_id)
         st.experimental_rerun()
-
-
-
 
 # Form for input
 k1, k2 = st.columns(2)
@@ -221,27 +246,6 @@ df['Monthly'] = df['date'].dt.to_period('M')
 df['Weekly'] = df['date'].dt.to_period('W')
 df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
 
-
-# Calculate metrics
-current_date = datetime.now().date()
-start_of_week = current_date - timedelta(days=current_date.weekday())
-current_week_data = df[df['date'].dt.date >= start_of_week]
-num_reports_this_week = current_week_data.shape[0]
-total_devotees = len(devotee_names)
-intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
-intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
-num_intermediate_devotees = intermediate_devotees.shape[0]
-
-# Display metrics using metric cards
-cols = st.columns(3)
-with cols[0]:
-    ui.metric_card(title="📅 Reports This Week", content=f"{num_reports_this_week}", description="Number of reports submitted this week", key="reports_this_week")
-with cols[1]:
-    ui.metric_card(title="🙏 Total Devotees", content=f"{total_devotees}", description="Total number of devotees", key="total_devotees")
-with cols[2]:
-    ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
-
-
 with k2:
     # List of video URLs from your YouTube channel
     video_urls = [
@@ -314,6 +318,7 @@ if not df.empty:
 
         st.write(f"🏆 Top 10 Devotees for {current_month} {current_year}")
         st.dataframe(top_10_monthly[['Month', 'devotee_name', 'total_score']], hide_index=True)
+
 
         # Devotee of the Month
         devotee_of_month = top_10_monthly.iloc[0]
