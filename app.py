@@ -79,14 +79,23 @@ def rename_devotee(devotee_id, new_name):
 # Remove report by ID
 
 
-
 def remove_report(id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
+        conn.commit()
+        st.success(f"Report with ID {id} has been removed successfully.")
+    except psycopg2.Error as e:
+        st.error(f"An error occurred while removing the report: {e}")
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 
 # Sidebar options
 devotees_list = load_devotees()
