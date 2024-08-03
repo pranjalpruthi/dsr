@@ -26,58 +26,67 @@ def load_devotees():
 def add_devotee(devotee_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO devotees (devotee_name) VALUES (%s) ON CONFLICT (devotee_name) DO NOTHING", (devotee_name,))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("INSERT INTO devotees (devotee_name) VALUES (%s) ON CONFLICT (devotee_name) DO NOTHING", (devotee_name,))
+        conn.commit()
+        return True, f"Devotee '{devotee_name}' added successfully."
+    except psycopg2.Error as e:
+        return False, f"Error adding devotee: {e}"
+    finally:
+        cur.close()
+        conn.close()
 
 # Remove devotee
 def remove_devotee(devotee_id):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM devotees WHERE devotee_id = %s", (devotee_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("DELETE FROM devotees WHERE devotee_id = %s", (devotee_id,))
+        conn.commit()
+        return True, f"Devotee with ID {devotee_id} removed successfully."
+    except psycopg2.Error as e:
+        return False, f"Error removing devotee: {e}"
+    finally:
+        cur.close()
+        conn.close()
 
 # Rename devotee
 def rename_devotee(devotee_id, new_name):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE devotees SET devotee_name = %s WHERE devotee_id = %s", (new_name, devotee_id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("UPDATE devotees SET devotee_name = %s WHERE devotee_id = %s", (new_name, devotee_id))
+        conn.commit()
+        return True, f"Devotee renamed to '{new_name}' successfully."
+    except psycopg2.Error as e:
+        return False, f"Error renaming devotee: {e}"
+    finally:
+        cur.close()
+        conn.close()
 
 # Remove report by ID
 def remove_report(id):
-    conn = None
-    cur = None
+    conn = get_connection()
+    cur = conn.cursor()
     try:
-        conn = get_connection()
-        cur = conn.cursor()
         cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
         conn.commit()
-        st.success(f"Report with ID {id} has been removed successfully.")
+        return True, f"Report with ID {id} removed successfully."
     except psycopg2.Error as e:
-        st.error(f"An error occurred while removing the report: {e}")
+        return False, f"Error removing report: {e}"
     finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
+        cur.close()
+        conn.close()
 
-# Load sadhana data
-def load_sadhana_data():
+# Load reports from database
+def load_reports():
     conn = get_connection()
-    query = '''
+    df = pd.read_sql_query('''
     SELECT sr.*, d.devotee_name 
     FROM sadhna_report sr 
     JOIN devotees d ON sr.devotee_id = d.devotee_id
-    '''
-    df = pd.read_sql_query(query, conn)
+    ''', conn)
     conn.close()
-    df['date'] = pd.to_datetime(df['date'])
     return df
 
 # Password check function
@@ -91,7 +100,7 @@ def check_password():
             correct_password = str(st.secrets["password"])
             if hmac.compare_digest(entered_password, correct_password):
                 st.session_state["password_correct"] = True
-                del st.session_state["password"]
+                del st.session_state["password"]  # Don't store the password.
             else:
                 st.session_state["password_correct"] = False
         else:
@@ -110,7 +119,7 @@ def check_password():
 st.set_page_config(page_title="Manage Devotees", page_icon="🙏", layout='wide')
 
 if not check_password():
-    st.stop()
+    st.stop()  # Do not continue if check_password is not True.
 
 st.title('Manage Devotees')
 
@@ -118,75 +127,90 @@ st.title('Manage Devotees')
 devotees_list = load_devotees()
 devotee_names = [devotee[1] for devotee in devotees_list]
 devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
-df = load_sadhana_data()
+df = load_reports()
 
-# Sidebar options
-with st.sidebar:
-    st.header("Management Options")
-    
-    with st.expander("Add Devotee"):
-        new_devotee = st.text_input("New Devotee Name", key="new_devotee")
-        if st.button("Add Devotee", key="add_devotee_button"):
-            add_devotee(new_devotee)
-            st.rerun()
+# Sidebar with metrics
+st.sidebar.header("📊 Metrics")
+total_devotees = len(devotee_names)
+total_reports = len(df)
+avg_score = df['total_score'].mean()
 
-    with st.expander("Remove Devotee"):
-        remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
-        if st.button("Remove Devotee", key="remove_devotee_button"):
-            remove_devotee(devotee_ids[remove_devotee_name])
-            st.rerun()
-
-    with st.expander("Rename Devotee"):
-        old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
-        new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
-        if st.button("Rename Devotee", key="rename_devotee_button"):
-            rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
-            st.rerun()
-
-    with st.expander("Remove Report"):
-        report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
-        if st.button("Remove Report", key="remove_report_button"):
-            remove_report(report_id)
-            st.rerun()
+st.sidebar.metric("Total Devotees", total_devotees)
+st.sidebar.metric("Total Reports", total_reports)
+st.sidebar.metric("Average Score", f"{avg_score:.2f}")
 
 # Main content
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Devotee Statistics")
-    total_devotees = len(devotee_names)
-    active_devotees = df['devotee_name'].nunique()
-    st.metric("Total Devotees", total_devotees)
-    st.metric("Active Devotees (Last 30 days)", active_devotees)
+    with st.expander("➕ Add Devotee", expanded=True):
+        new_devotee = st.text_input("New Devotee Name", key="new_devotee")
+        if st.button("Add Devotee", key="add_devotee_button"):
+            success, message = add_devotee(new_devotee)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+            st.rerun()
 
-    st.subheader("Top 5 Most Active Devotees")
-    top_devotees = df.groupby('devotee_name')['total_score'].sum().sort_values(ascending=False).head(5)
-    st.bar_chart(top_devotees)
+    with st.expander("🔄 Rename Devotee", expanded=True):
+        old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
+        new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
+        if st.button("Rename Devotee", key="rename_devotee_button"):
+            success, message = rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+            st.rerun()
 
 with col2:
-    st.subheader("Sadhana Report Statistics")
-    total_reports = len(df)
-    avg_score = df['total_score'].mean()
-    st.metric("Total Reports", total_reports)
-    st.metric("Average Score", f"{avg_score:.2f}")
+    with st.expander("➖ Remove Devotee", expanded=True):
+        remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
+        if st.button("Remove Devotee", key="remove_devotee_button"):
+            success, message = remove_devotee(devotee_ids[remove_devotee_name])
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+            st.rerun()
 
-    st.subheader("Reports per Day (Last 30 days)")
-    last_30_days = df[df['date'] >= (datetime.now() - timedelta(days=30))]
-    reports_per_day = last_30_days.groupby('date').size()
-    st.line_chart(reports_per_day)
+    with st.expander("🗑️ Remove Report", expanded=True):
+        report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
+        if st.button("Remove Report", key="remove_report_button"):
+            success, message = remove_report(report_id)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+            st.rerun()
 
-st.subheader("All Devotees")
-st.dataframe(pd.DataFrame({"Devotee Name": devotee_names}))
+# Charts
+st.header("📈 Charts")
 
-st.subheader("Recent Sadhana Reports")
-st.dataframe(df.sort_values('date', ascending=False).head(10))
+col3, col4 = st.columns(2)
 
-st.subheader("Score Distribution")
-fig = px.histogram(df, x="total_score", nbins=20, title="Distribution of Total Scores")
-st.plotly_chart(fig)
+with col3:
+    # Top 10 devotees by total score
+    top_10 = df.groupby('devotee_name')['total_score'].sum().nlargest(10).reset_index()
+    fig1 = px.bar(top_10, x='devotee_name', y='total_score', title='Top 10 Devotees by Total Score')
+    st.plotly_chart(fig1, use_container_width=True)
 
-st.subheader("Average Scores Over Time")
-weekly_scores = df.groupby(df['date'].dt.to_period('W'))['total_score'].mean().reset_index()
-weekly_scores['date'] = weekly_scores['date'].dt.to_timestamp()
-fig = px.line(weekly_scores, x="date", y="total_score", title="Weekly Average Scores")
-st.plotly_chart(fig)
+with col4:
+    # Average score by month
+    df['date'] = pd.to_datetime(df['date'])
+    monthly_avg = df.groupby(df['date'].dt.to_period('M'))['total_score'].mean().reset_index()
+    monthly_avg['date'] = monthly_avg['date'].dt.to_timestamp()
+    fig2 = px.line(monthly_avg, x='date', y='total_score', title='Average Score by Month')
+    st.plotly_chart(fig2, use_container_width=True)
+
+# Show all devotees
+with st.expander("👥 Show All Devotees", expanded=False):
+    st.write("List of all devotees:")
+    for name in devotee_names:
+        st.write(f"- {name}")
+
+# Recent reports
+st.header("📋 Recent Reports")
+recent_reports = df.sort_values('date', ascending=False).head(10)
+st.dataframe(recent_reports, use_container_width=True)
