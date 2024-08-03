@@ -275,16 +275,28 @@ if not df.empty:
         st.dataframe(devotee_of_week[['Formatted_Weekly', 'devotee_name', 'total_score']], hide_index=True)
 
     with c2:
-        # Top 10 devotees monthly
-        top_10_monthly = df.groupby(['Monthly', 'devotee_name'])['total_score'].sum().reset_index()
-        top_10_monthly = top_10_monthly.sort_values(by=['Monthly', 'total_score'], ascending=[True, False]).groupby('Monthly').head(10)
-        st.write("🏆 Top 10 Devotees Monthly")
-        st.dataframe(top_10_monthly, hide_index=True)
+        current_month = datetime.now().strftime('%B')
+        current_year = datetime.now().year
+
+        # Filter the dataframe for the current month
+        current_month_data = df[df['date'].dt.to_period('M') == pd.Period(f"{current_year}-{datetime.now().month}")]
+
+        # Top 10 devotees for the current month
+        top_10_monthly = current_month_data.groupby('devotee_name')['total_score'].sum().reset_index()
+        top_10_monthly = top_10_monthly.sort_values(by='total_score', ascending=False).head(10)
+        top_10_monthly['Month'] = f"{current_month} {current_year}"
+
+        st.write(f"🏆 Top 10 Devotees for {current_month} {current_year}")
+        st.dataframe(top_10_monthly[['Month', 'devotee_name', 'total_score']], hide_index=True)
 
         # Devotee of the Month
-        devotee_of_month = top_10_monthly.groupby('Monthly').first().reset_index()
-        st.write("🌟 Devotee of the Month")
-        st.dataframe(devotee_of_month[['Monthly', 'devotee_name', 'total_score']], hide_index=True)
+        devotee_of_month = top_10_monthly.iloc[0]
+        st.write(f"🌟 Devotee of the Month ({current_month} {current_year})")
+        st.dataframe(pd.DataFrame({
+            'Month': [devotee_of_month['Month']],
+            'devotee_name': [devotee_of_month['devotee_name']],
+            'total_score': [devotee_of_month['total_score']]
+        }), hide_index=True)
 
         # Weekly intermediate devotees requiring spiritual guidance
         intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
