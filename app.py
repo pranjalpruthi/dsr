@@ -34,6 +34,16 @@ st.set_page_config(
 
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
+# Load devotees list from database
+def load_devotees():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT devotee_id, devotee_name FROM devotees")
+    devotees = cur.fetchall()
+    cur.close()
+    conn.close()
+    return devotees
+
 # Load data from database
 conn = get_connection()
 df = pd.read_sql_query('''
@@ -50,6 +60,11 @@ df['date'] = pd.to_datetime(df['date'])
 df['Monthly'] = df['date'].dt.to_period('M')
 df['Weekly'] = df['date'].dt.to_period('W')
 df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+
+# Load devotees
+devotees_list = load_devotees()
+devotee_names = [devotee[1] for devotee in devotees_list]
+devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
 
 # Calculate metrics
 current_date = datetime.now().date()
@@ -76,16 +91,6 @@ st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏
 
 # Sidebar for managing devotees
 st.sidebar.header("Manage Devotees")
-
-# Load devotees list from database
-def load_devotees():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT devotee_id, devotee_name FROM devotees")
-    devotees = cur.fetchall()
-    cur.close()
-    conn.close()
-    return devotees
 
 # Add devotee
 def add_devotee(devotee_name):
@@ -133,10 +138,6 @@ def remove_report(id):
             conn.close()
 
 # Sidebar options
-devotees_list = load_devotees()
-devotee_names = [devotee[1] for devotee in devotees_list]
-devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
-
 with st.sidebar.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name", key="new_devotee")
     if st.button("Add Devotee", key="add_devotee_button"):
