@@ -6,6 +6,7 @@ import random
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime, timedelta
+import streamlit_shadcn_ui as ui
 
 
 # Database connection string
@@ -36,7 +37,28 @@ st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
 st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
+
+
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
+
+
+# Calculate metrics
+current_date = datetime.now().date()
+start_of_week = current_date - timedelta(days=current_date.weekday())
+
+reports_this_week = len(df[df['date'].dt.date >= start_of_week])
+total_devotees = len(df['devotee_name'].unique())
+devotees_requiring_attention = len(intermediate_devotees['devotee_name'].unique())
+
+# Display metric cards
+cols = st.columns(3)
+with cols[0]:
+    ui.metric_card(title="📊 Reports This Week", content=str(reports_this_week), description="Number of reports submitted", key="reports_metric")
+with cols[1]:
+    ui.metric_card(title="🙏 Total Devotees", content=str(total_devotees), description="Unique devotees in the system", key="devotees_metric")
+with cols[2]:
+    ui.metric_card(title="🧘‍♂️ Devotees Needing Guidance", content=str(devotees_requiring_attention), description="Intermediate devotees this week", key="attention_metric")
+
 
 # Sidebar for managing devotees
 st.sidebar.header("Manage Devotees")

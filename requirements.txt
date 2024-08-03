@@ -5,3 +5,4 @@ plotly_express
 sqlitecloud
 sqlalchemy
 psycopg2-binary
+streamlit-shadcn-ui
