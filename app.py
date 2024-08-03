@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import psycopg2
 from psycopg2 import sql
-
+import random
 # Database connection string
 conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
 
