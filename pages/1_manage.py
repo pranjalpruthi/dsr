@@ -117,20 +117,20 @@ with st.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name", key="new_devotee")
     if st.button("Add Devotee", key="add_devotee_button"):
         add_devotee(new_devotee)
-        st.experimental_rerun()
+        st.rerun()
 
 with st.expander("Remove Devotee"):
     remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
     if st.button("Remove Devotee", key="remove_devotee_button"):
         remove_devotee(devotee_ids[remove_devotee_name])
-        st.experimental_rerun()
+        st.rerun()
 
 with st.expander("Rename Devotee"):
     old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
     new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
     if st.button("Rename Devotee", key="rename_devotee_button"):
         rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
-        st.experimental_rerun()
+        st.rerun()
 
 with st.expander("Show All Devotees"):
     st.write("List of all devotees:")
@@ -141,4 +141,4 @@ with st.expander("Remove Report"):
     report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
     if st.button("Remove Report", key="remove_report_button"):
         remove_report(report_id)
-        st.experimental_rerun()
+        st.rerun()
