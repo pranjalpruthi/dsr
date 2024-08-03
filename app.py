@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import plotly.express as px
 import random
 import psycopg2
 from psycopg2 import sql
-from datetime import datetime, timedelta
 import streamlit_shadcn_ui as ui
 
 # Database connection string
@@ -34,16 +33,6 @@ st.set_page_config(
 
 st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
-# Load devotees list from database
-def load_devotees():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT devotee_id, devotee_name FROM devotees")
-    devotees = cur.fetchall()
-    cur.close()
-    conn.close()
-    return devotees
-
 # Load data from database
 conn = get_connection()
 df = pd.read_sql_query('''
@@ -60,6 +49,16 @@ df['date'] = pd.to_datetime(df['date'])
 df['Monthly'] = df['date'].dt.to_period('M')
 df['Weekly'] = df['date'].dt.to_period('W')
 df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+
+# Load devotees list from database
+def load_devotees():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT devotee_id, devotee_name FROM devotees")
+    devotees = cur.fetchall()
+    cur.close()
+    conn.close()
+    return devotees
 
 # Load devotees
 devotees_list = load_devotees()
@@ -89,84 +88,9 @@ st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻�
 
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
-# Sidebar for managing devotees
-st.sidebar.header("Manage Devotees")
-
-# Add devotee
-def add_devotee(devotee_name):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO devotees (devotee_name) VALUES (%s) ON CONFLICT (devotee_name) DO NOTHING", (devotee_name,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Remove devotee
-def remove_devotee(devotee_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM devotees WHERE devotee_id = %s", (devotee_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Rename devotee
-def rename_devotee(devotee_id, new_name):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE devotees SET devotee_name = %s WHERE devotee_id = %s", (new_name, devotee_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Remove report by ID
-def remove_report(id):
-    conn = None
-    cur = None
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
-        conn.commit()
-        st.success(f"Report with ID {id} has been removed successfully.")
-    except psycopg2.Error as e:
-        st.error(f"An error occurred while removing the report: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
-
-# Sidebar options
-with st.sidebar.expander("Add Devotee"):
-    new_devotee = st.text_input("New Devotee Name", key="new_devotee")
-    if st.button("Add Devotee", key="add_devotee_button"):
-        add_devotee(new_devotee)
-        st.experimental_rerun()
-
-with st.sidebar.expander("Remove Devotee"):
-    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
-    if st.button("Remove Devotee", key="remove_devotee_button"):
-        remove_devotee(devotee_ids[remove_devotee_name])
-        st.experimental_rerun()
-
-with st.sidebar.expander("Rename Devotee"):
-    old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
-    new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
-    if st.button("Rename Devotee", key="rename_devotee_button"):
-        rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
-        st.experimental_rerun()
-
-with st.sidebar.expander("Show All Devotees"):
-    st.write("List of all devotees:")
-    for name in devotee_names:
-        st.write(f"- {name}")
-
-with st.sidebar.expander("Remove Report"):
-    report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
-    if st.button("Remove Report", key="remove_report_button"):
-        remove_report(report_id)
-        st.experimental_rerun()
+# Link to manage devotees page
+st.sidebar.header("Navigation")
+st.sidebar.markdown("[Manage Devotees](2_manage.py)")
 
 # Form for input
 k1, k2 = st.columns(2)
@@ -378,6 +302,7 @@ df = df.reindex(columns=desired_order)
 
 # Format the date column to show only the date part
 df['date'] = df['date'].dt.date
+
 
 # Display data
 st.subheader('📊 Sadhna Data')
