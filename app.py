@@ -42,23 +42,6 @@ st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻�
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
 
-# Calculate metrics
-current_date = datetime.now().date()
-start_of_week = current_date - timedelta(days=current_date.weekday())
-
-reports_this_week = len(df[df['date'].dt.date >= start_of_week])
-total_devotees = len(df['devotee_name'].unique())
-devotees_requiring_attention = len(intermediate_devotees['devotee_name'].unique())
-
-# Display metric cards
-cols = st.columns(3)
-with cols[0]:
-    ui.metric_card(title="📊 Reports This Week", content=str(reports_this_week), description="Number of reports submitted", key="reports_metric")
-with cols[1]:
-    ui.metric_card(title="🙏 Total Devotees", content=str(total_devotees), description="Unique devotees in the system", key="devotees_metric")
-with cols[2]:
-    ui.metric_card(title="🧘‍♂️ Devotees Needing Guidance", content=str(devotees_requiring_attention), description="Intermediate devotees this week", key="attention_metric")
-
 
 # Sidebar for managing devotees
 st.sidebar.header("Manage Devotees")
@@ -237,6 +220,27 @@ df['date'] = pd.to_datetime(df['date'])
 df['Monthly'] = df['date'].dt.to_period('M')
 df['Weekly'] = df['date'].dt.to_period('W')
 df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+
+
+# Calculate metrics
+current_date = datetime.now().date()
+start_of_week = current_date - timedelta(days=current_date.weekday())
+current_week_data = df[df['date'].dt.date >= start_of_week]
+num_reports_this_week = current_week_data.shape[0]
+total_devotees = len(devotee_names)
+intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
+intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
+num_intermediate_devotees = intermediate_devotees.shape[0]
+
+# Display metrics using metric cards
+cols = st.columns(3)
+with cols[0]:
+    ui.metric_card(title="📅 Reports This Week", content=f"{num_reports_this_week}", description="Number of reports submitted this week", key="reports_this_week")
+with cols[1]:
+    ui.metric_card(title="🙏 Total Devotees", content=f"{total_devotees}", description="Total number of devotees", key="total_devotees")
+with cols[2]:
+    ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
+
 
 with k2:
     # List of video URLs from your YouTube channel
