@@ -296,27 +296,20 @@ if not df.empty:
         fig_monthly = px.bar(monthly_chart, x='devotee_name', y='total_score', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
         st.plotly_chart(fig_monthly)
 
+
+desired_order = [
+    'date', 'report_id', 'devotee_name', 'devotee_id', 'total_score',
+    'before_7_am_japa_session', 'before_7_am', 'from_7_to_9_am', 'after_9_am',
+    'total_rounds', 'score_a', 'book_name', 'book_reading_time_min', 'score_b',
+    'lecture_speaker', 'lecture_time_min', 'score_c', 'seva_name', 'seva_time_min',
+    'score_d', 'Monthly', 'Weekly', 'Formatted_Weekly'
+]
+
+# Reorder the columns
+df = df.reindex(columns=desired_order)
+
 # Display data
 st.subheader('📊 Sadhna Data')
 st.dataframe(df, hide_index=True)
 
 
-def get_database_schema():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT table_name, column_name, data_type, character_maximum_length, is_nullable
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-        ORDER BY table_name, ordinal_position;
-    """)
-    schema = cur.fetchall()
-    cur.close()
-    conn.close()
-    return schema
-
-# Add this somewhere in your Streamlit app
-with st.expander("Database Schema"):
-    schema = get_database_schema()
-    schema_df = pd.DataFrame(schema, columns=['Table', 'Column', 'Data Type', 'Max Length', 'Nullable'])
-    st.dataframe(schema_df)
