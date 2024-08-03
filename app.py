@@ -5,6 +5,8 @@ import plotly.express as px
 import random
 import psycopg2
 from psycopg2 import sql
+from datetime import datetime, timedelta
+
 
 # Database connection string
 conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
@@ -242,11 +244,26 @@ c1, c2 = st.columns(2)
 # Statistics
 if not df.empty:
     with c1:
-        # Top 10 devotees weekly
-        top_10_weekly = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
-        top_10_weekly = top_10_weekly.sort_values(by=['Formatted_Weekly', 'total_score'], ascending=[True, False]).groupby('Formatted_Weekly').head(10)
-        st.write("🏅 Top 10 Devotees Weekly")
-        st.dataframe(top_10_weekly, hide_index=True)
+
+
+                # Get the current date and the start of the current week (Monday)
+        current_date = datetime.now().date()
+        start_of_week = current_date - timedelta(days=current_date.weekday())
+
+        # Filter the dataframe for the current week
+        current_week_data = df[df['date'].dt.date >= start_of_week]
+
+        # Calculate the formatted week string for the current week
+        current_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
+
+        # Top 10 devotees for the current week
+        top_10_weekly = current_week_data.groupby('devotee_name')['total_score'].sum().reset_index()
+        top_10_weekly = top_10_weekly.sort_values(by='total_score', ascending=False).head(10)
+        top_10_weekly['Formatted_Weekly'] = current_week_str
+
+        st.write(f"🏅 Top 10 Devotees for the Current Week ({current_week_str})")
+        st.dataframe(top_10_weekly[['Formatted_Weekly', 'devotee_name', 'total_score']], hide_index=True)
+
 
         # Most favorite book of the week
         favorite_book_weekly = df.groupby(['Formatted_Weekly', 'book_name'])['book_name'].count().reset_index(name='count')
@@ -317,8 +334,9 @@ desired_order = [
 # Reorder the columns
 df = df.reindex(columns=desired_order)
 
+# Format the date column to show only the date part
+df['date'] = df['date'].dt.date
+
 # Display data
 st.subheader('📊 Sadhna Data')
 st.dataframe(df, hide_index=True)
-
-
