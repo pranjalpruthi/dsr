@@ -300,3 +300,23 @@ if not df.empty:
 st.subheader('📊 Sadhna Data')
 st.dataframe(df, hide_index=True)
 
+
+def get_database_schema():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT table_name, column_name, data_type, character_maximum_length, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position;
+    """)
+    schema = cur.fetchall()
+    cur.close()
+    conn.close()
+    return schema
+
+# Add this somewhere in your Streamlit app
+with st.expander("Database Schema"):
+    schema = get_database_schema()
+    schema_df = pd.DataFrame(schema, columns=['Table', 'Column', 'Data Type', 'Max Length', 'Nullable'])
+    st.dataframe(schema_df)
