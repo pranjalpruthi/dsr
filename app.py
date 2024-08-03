@@ -245,8 +245,6 @@ c1, c2 = st.columns(2)
 if not df.empty:
     with c1:
 
-
-                # Get the current date and the start of the current week (Monday)
         current_date = datetime.now().date()
         start_of_week = current_date - timedelta(days=current_date.weekday())
 
