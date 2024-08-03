@@ -10,6 +10,7 @@ def get_connection():
     return psycopg2.connect(conn_str)
 
 # Password check function
+
 def check_password():
     """Returns True if the user had the correct password."""
 
@@ -25,8 +26,18 @@ def check_password():
             st.error("Password not set in app secrets.")
             st.session_state["password_correct"] = False
 
-    # Rest of the function remains the same...
 
+    # Return True if the password is validated.
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # Show input for password.
+    st.text_input(
+        "Password", type="password", on_change=password_entered, key="password"
+    )
+    if "password_correct" in st.session_state:
+        st.error("😕 Password incorrect")
+    return False
 
 # ... (keep all your other functions like load_devotees, add_devotee, etc.)
 
