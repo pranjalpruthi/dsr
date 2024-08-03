@@ -26,13 +26,20 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
 
 # Streamlit app
 st.set_page_config(
-    page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
+    page_title="🪖 Daily Sadhana Report 📝 ",
     page_icon="🪖 ",
     layout='wide',
 )
 
-st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
+# Title with version badge
+st.title('🪖 Daily Sadhana Report')
 
+# Display version badge
+ui.badges(
+    badge_list=[("v0.0.3", "default")],
+    class_name="flex gap-2",
+    key="version_badge"
+)
 # Load data from database
 conn = get_connection()
 df = pd.read_sql_query('''
