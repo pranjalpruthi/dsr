@@ -1,10 +1,58 @@
-import hmac
 import streamlit as st
 import psycopg2
+import hmac
 
 # Database connection string
 conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
 
+# Connect to PostgreSQL database
+def get_connection():
+    return psycopg2.connect(conn_str)
+
+# Password check function
+def check_password():
+    """Returns True if the user had the correct password."""
+
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if hmac.compare_digest(st.session_state["password"], st.secrets["password"]):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Don't store the password.
+        else:
+            st.session_state["password_correct"] = False
+
+    # Return True if the password is validated.
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # Show input for password.
+    st.text_input(
+        "Password", type="password", on_change=password_entered, key="password"
+    )
+    if "password_correct" in st.session_state:
+        st.error("😕 Password incorrect")
+    return False
+
+# ... (keep all your other functions like load_devotees, add_devotee, etc.)
+
+# Streamlit app
+st.set_page_config(
+    page_title="Manage Devotees",
+    page_icon="🙏",
+    layout='wide',
+)
+
+if not check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
+st.title('Manage Devotees')
+
+# Load devotees
+devotees_list = load_devotees()
+devotee_names = [devotee[1] for devotee in devotees_list]
+devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
+
+# ... (keep all your expander sections for adding, removing, renaming devotees, etc.)
 # Connect to PostgreSQL database
 def get_connection():
     return psycopg2.connect(conn_str)
@@ -64,46 +112,6 @@ def remove_report(id):
         if conn:
             conn.close()
 
-def check_password():
-    """Returns True if the user had the correct password."""
-
-    def password_entered():
-        """Checks whether a password entered by the user is correct."""
-        if hmac.compare_digest(st.session_state["password"], st.secrets["password"]):
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # Don't store the password.
-        else:
-            st.session_state["password_correct"] = False
-
-    # Return True if the password is validated.
-    if st.session_state.get("password_correct", False):
-        return True
-
-    # Show input for password.
-    st.text_input(
-        "Password", type="password", on_change=password_entered, key="password"
-    )
-    if "password_correct" in st.session_state:
-        st.error("😕 Password incorrect")
-    return False
-
-# Streamlit app
-st.set_page_config(
-    page_title="Manage Devotees",
-    page_icon="🙏",
-    layout='wide',
-)
-
-if not check_password():
-    st.stop()  # Do not continue if check_password is not True.
-
-st.title('Manage Devotees')
-
-# Load devotees
-devotees_list = load_devotees()
-devotee_names = [devotee[1] for devotee in devotees_list]
-devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
-
 # Sidebar options
 with st.expander("Add Devotee"):
     new_devotee = st.text_input("New Devotee Name", key="new_devotee")
@@ -134,3 +142,4 @@ with st.expander("Remove Report"):
     if st.button("Remove Report", key="remove_report_button"):
         remove_report(report_id)
         st.experimental_rerun()
+
