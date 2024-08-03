@@ -17,7 +17,10 @@ def check_password():
     def password_entered():
         """Checks whether a password entered by the user is correct."""
         if "password" in st.secrets:
-            if hmac.compare_digest(st.session_state["password"], st.secrets["password"]):
+            # Convert both passwords to strings before comparison
+            entered_password = str(st.session_state["password"])
+            correct_password = str(st.secrets["password"])
+            if hmac.compare_digest(entered_password, correct_password):
                 st.session_state["password_correct"] = True
                 del st.session_state["password"]  # Don't store the password.
             else:
