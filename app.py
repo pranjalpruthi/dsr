@@ -36,7 +36,7 @@ st.title('🪖 Daily Sadhana Report')
 
 # Display version badge
 ui.badges(
-    badge_list=[("v0.0.3", "default")],
+    badge_list=[("v0.0.4 - 🌼 Govardhan Lifter Stage 🌼", "default")],
     class_name="flex gap-2",
     key="version_badge"
 )
