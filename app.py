@@ -1,12 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import plotly.express as px
-import random
 import psycopg2
 from psycopg2 import sql
-from datetime import datetime, timedelta
-import streamlit_shadcn_ui as ui
 
 # Database connection string
 conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
@@ -25,15 +21,6 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
     total_score = score_a + score_b + score_c + score_d
     return total_rounds, score_a, score_b, score_c, score_d, total_score
 
-# Streamlit app
-st.set_page_config(
-    page_title="🪖 Daily Sadhana Report 📝 DSR v0.0.3",
-    page_icon="🪖 ",
-    layout='wide',
-)
-
-st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
-
 # Load devotees list from database
 def load_devotees():
     conn = get_connection()
@@ -44,129 +31,12 @@ def load_devotees():
     conn.close()
     return devotees
 
-# Load data from database
-conn = get_connection()
-df = pd.read_sql_query('''
-SELECT sr.*, d.devotee_name 
-FROM sadhna_report sr 
-JOIN devotees d ON sr.devotee_id = d.devotee_id
-''', conn)
-conn.close()
-
-# Ensure date column is in datetime format
-df['date'] = pd.to_datetime(df['date'])
-
-# Calculate weekly and monthly periods
-df['Monthly'] = df['date'].dt.to_period('M')
-df['Weekly'] = df['date'].dt.to_period('W')
-df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
+st.title('🪖 Daily Sadhana Report 📝 DSR v0.0.3')
 
 # Load devotees
 devotees_list = load_devotees()
 devotee_names = [devotee[1] for devotee in devotees_list]
 devotee_ids = {devotee[1]: devotee[0] for devotee in devotees_list}
-
-# Calculate metrics
-current_date = datetime.now().date()
-start_of_week = current_date - timedelta(days=current_date.weekday())
-current_week_data = df[df['date'].dt.date >= start_of_week]
-num_reports_this_week = current_week_data.shape[0]
-total_devotees = len(devotee_names)
-intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
-intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
-num_intermediate_devotees = intermediate_devotees.shape[0]
-
-# Display metrics using metric cards
-cols = st.columns(3)
-with cols[0]:
-    ui.metric_card(title="📅 Reports This Week", content=f"{num_reports_this_week}", description="Number of reports submitted this week", key="reports_this_week")
-with cols[1]:
-    ui.metric_card(title="🙏 Total Devotees", content=f"{total_devotees}", description="Total number of devotees", key="total_devotees")
-with cols[2]:
-    ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
-
-st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
-
-st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
-
-# Sidebar for managing devotees
-st.sidebar.header("Manage Devotees")
-
-# Add devotee
-def add_devotee(devotee_name):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO devotees (devotee_name) VALUES (%s) ON CONFLICT (devotee_name) DO NOTHING", (devotee_name,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Remove devotee
-def remove_devotee(devotee_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM devotees WHERE devotee_id = %s", (devotee_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Rename devotee
-def rename_devotee(devotee_id, new_name):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE devotees SET devotee_name = %s WHERE devotee_id = %s", (new_name, devotee_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# Remove report by ID
-def remove_report(id):
-    conn = None
-    cur = None
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM sadhna_report WHERE report_id = %s", (id,))
-        conn.commit()
-        st.success(f"Report with ID {id} has been removed successfully.")
-    except psycopg2.Error as e:
-        st.error(f"An error occurred while removing the report: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
-
-# Sidebar options
-with st.sidebar.expander("Add Devotee"):
-    new_devotee = st.text_input("New Devotee Name", key="new_devotee")
-    if st.button("Add Devotee", key="add_devotee_button"):
-        add_devotee(new_devotee)
-        st.experimental_rerun()
-
-with st.sidebar.expander("Remove Devotee"):
-    remove_devotee_name = st.selectbox("Select Devotee to Remove", devotee_names, key="remove_devotee")
-    if st.button("Remove Devotee", key="remove_devotee_button"):
-        remove_devotee(devotee_ids[remove_devotee_name])
-        st.experimental_rerun()
-
-with st.sidebar.expander("Rename Devotee"):
-    old_devotee_name = st.selectbox("Select Devotee to Rename", devotee_names, key="old_devotee")
-    new_devotee_name = st.text_input("New Devotee Name", key="new_devotee_name")
-    if st.button("Rename Devotee", key="rename_devotee_button"):
-        rename_devotee(devotee_ids[old_devotee_name], new_devotee_name)
-        st.experimental_rerun()
-
-with st.sidebar.expander("Show All Devotees"):
-    st.write("List of all devotees:")
-    for name in devotee_names:
-        st.write(f"- {name}")
-
-with st.sidebar.expander("Remove Report"):
-    report_id = st.number_input("Enter Report ID to Remove", min_value=1, step=1, key="report_id")
-    if st.button("Remove Report", key="remove_report_button"):
-        remove_report(report_id)
-        st.experimental_rerun()
 
 # Form for input
 k1, k2 = st.columns(2)
@@ -230,23 +100,6 @@ with k1:
         conn.close()
         st.balloons()
 
-# Load data from database
-conn = get_connection()
-df = pd.read_sql_query('''
-SELECT sr.*, d.devotee_name 
-FROM sadhna_report sr 
-JOIN devotees d ON sr.devotee_id = d.devotee_id
-''', conn)
-conn.close()
-
-# Ensure date column is in datetime format
-df['date'] = pd.to_datetime(df['date'])
-
-# Calculate weekly and monthly periods
-df['Monthly'] = df['date'].dt.to_period('M')
-df['Weekly'] = df['date'].dt.to_period('W')
-df['Formatted_Weekly'] = df['Weekly'].apply(lambda x: f"W{x.week}-{x.year}")
-
 with k2:
     # List of video URLs from your YouTube channel
     video_urls = [
@@ -269,116 +122,3 @@ with k2:
 
     st.subheader('🪄📺')
     st.video(random_video_url)
-
-c1, c2 = st.columns(2)
-
-# Statistics
-if not df.empty:
-    with c1:
-
-        current_date = datetime.now().date()
-        start_of_week = current_date - timedelta(days=current_date.weekday())
-
-        # Filter the dataframe for the current week
-        current_week_data = df[df['date'].dt.date >= start_of_week]
-
-        # Calculate the formatted week string for the current week
-        current_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
-
-        # Top 10 devotees for the current week
-        top_10_weekly = current_week_data.groupby('devotee_name')['total_score'].sum().reset_index()
-        top_10_weekly = top_10_weekly.sort_values(by='total_score', ascending=False).head(10)
-        top_10_weekly['Formatted_Weekly'] = current_week_str
-
-        st.write(f"🏅 Top 10 Devotees for the Current Week ({current_week_str})")
-        st.dataframe(top_10_weekly[['Formatted_Weekly', 'devotee_name', 'total_score']], hide_index=True)
-
-
-        # Most favorite book of the week
-        favorite_book_weekly = df.groupby(['Formatted_Weekly', 'book_name'])['book_name'].count().reset_index(name='count')
-        favorite_book_weekly = favorite_book_weekly.sort_values(by=['Formatted_Weekly', 'count'], ascending=[True, False]).groupby('Formatted_Weekly').head(1)
-        st.write("📚 Most Favorite Book of the Week")
-        st.dataframe(favorite_book_weekly, hide_index=True)
-
-        # Devotee of the Week
-        devotee_of_week = top_10_weekly.groupby('Formatted_Weekly').first().reset_index()
-        st.write("🌟 Devotee of the Week")
-        st.dataframe(devotee_of_week[['Formatted_Weekly', 'devotee_name', 'total_score']], hide_index=True)
-
-    with c2:
-        current_month = datetime.now().strftime('%B')
-        current_year = datetime.now().year
-
-        # Filter the dataframe for the current month
-        current_month_data = df[df['date'].dt.to_period('M') == pd.Period(f"{current_year}-{datetime.now().month}")]
-
-        # Top 10 devotees for the current month
-        top_10_monthly = current_month_data.groupby('devotee_name')['total_score'].sum().reset_index()
-        top_10_monthly = top_10_monthly.sort_values(by='total_score', ascending=False).head(10)
-        top_10_monthly['Month'] = f"{current_month} {current_year}"
-
-        st.write(f"🏆 Top 10 Devotees for {current_month} {current_year}")
-        st.dataframe(top_10_monthly[['Month', 'devotee_name', 'total_score']], hide_index=True)
-
-
-        # Devotee of the Month
-        devotee_of_month = top_10_monthly.iloc[0]
-        st.write(f"🌟 Devotee of the Month ({current_month} {current_year})")
-        st.dataframe(pd.DataFrame({
-            'Month': [devotee_of_month['Month']],
-            'devotee_name': [devotee_of_month['devotee_name']],
-            'total_score': [devotee_of_month['total_score']]
-        }), hide_index=True)
-
-        # Weekly intermediate devotees requiring spiritual guidance
-        intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
-        intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
-        st.write("🧘‍♂️ Weekly Intermediate Devotees Requiring Spiritual Guidance")
-        st.dataframe(intermediate_devotees, hide_index=True)
-
-    with c1:
-        st.subheader('🏅 Weekly Chart')
-
-        # Weekly multi-select
-        weekly_options = df['Formatted_Weekly'].unique()
-        default_weekly = [week for week in weekly_options if week in weekly_options]
-
-        selected_weeks = st.multiselect('Select Weeks', options=weekly_options, default=default_weekly, key="weekly_multiselect")
-
-        # Filter data based on selected weeks
-        weekly_chart = df[df['Formatted_Weekly'].isin(selected_weeks)].groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
-        fig_weekly = px.bar(weekly_chart, x='devotee_name', y='total_score', color='Formatted_Weekly', title='Weekly Total Points per Devotee', barmode='stack')
-        st.plotly_chart(fig_weekly)
-
-    with c2:
-        st.subheader('🪖 Monthly Chart')
-
-        # Monthly multi-select
-        monthly_options = df['Monthly'].unique()
-        default_monthly = [month for month in monthly_options if month in monthly_options]
-
-        selected_months = st.multiselect('Select Months', options=monthly_options, default=default_monthly, key="monthly_multiselect")
-
-        # Filter data based on selected months
-        monthly_chart = df[df['Monthly'].isin(selected_months)].groupby(['Monthly', 'devotee_name'])['total_score'].sum().reset_index()
-        fig_monthly = px.bar(monthly_chart, x='devotee_name', y='total_score', color='Monthly', title='Monthly Total Points per Devotee', barmode='stack')
-        st.plotly_chart(fig_monthly)
-
-
-desired_order = [
-    'date', 'report_id', 'devotee_name', 'devotee_id', 'total_score',
-    'before_7_am_japa_session', 'before_7_am', 'from_7_to_9_am', 'after_9_am',
-    'total_rounds', 'score_a', 'book_name', 'book_reading_time_min', 'score_b',
-    'lecture_speaker', 'lecture_time_min', 'score_c', 'seva_name', 'seva_time_min',
-    'score_d', 'Monthly', 'Weekly', 'Formatted_Weekly'
-]
-
-# Reorder the columns
-df = df.reindex(columns=desired_order)
-
-# Format the date column to show only the date part
-df['date'] = df['date'].dt.date
-
-# Display data
-st.subheader('📊 Sadhna Data')
-st.dataframe(df, hide_index=True)
