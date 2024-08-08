@@ -4,3 +4,9 @@ backgroundColor = "#000000"  # Black background
 secondaryBackgroundColor = "#1a1a1a"  # Dark grey for secondary elements
 textColor = "#FFFFFF"  # White text color
 font = "sans serif"
+
+[server]
+websocket_ping_timeout = 30
+
+[logger]
+level = "debug"
