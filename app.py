@@ -40,6 +40,7 @@ ui.badges(
     class_name="flex gap-2",
     key="version_badge"
 )
+
 # Load data from database
 conn = get_connection()
 df = pd.read_sql_query('''
@@ -206,29 +207,22 @@ c1, c2 = st.columns(2)
 # Statistics
 if not df.empty:
     with c1:
-        # Add a selectbox to choose between current week and previous week
-        week_option = st.selectbox('Select Week', ['Current Week', 'Previous Week'], key='week_option')
+        # Get unique weeks
+        unique_weeks = df['Formatted_Weekly'].unique()
+        current_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
 
-        current_date = datetime.now().date()
-        start_of_week = current_date - timedelta(days=current_date.weekday())
+        # Select week
+        selected_week = st.selectbox('Select Week', options=unique_weeks, index=list(unique_weeks).index(current_week_str))
 
-        if week_option == 'Previous Week':
-            start_of_week = start_of_week - timedelta(days=7)
-
-        end_of_week = start_of_week + timedelta(days=6)
-
-        # Filter the dataframe for the selected week
-        selected_week_data = df[(df['date'].dt.date >= start_of_week) & (df['date'].dt.date <= end_of_week)]
-
-        # Calculate the formatted week string for the selected week
-        selected_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
+        # Filter data for the selected week
+        selected_week_data = df[df['Formatted_Weekly'] == selected_week]
 
         # Top 10 devotees for the selected week
         top_10_weekly = selected_week_data.groupby('devotee_name')['total_score'].sum().reset_index()
         top_10_weekly = top_10_weekly.sort_values(by='total_score', ascending=False).head(10)
-        top_10_weekly['Formatted_Weekly'] = selected_week_str
+        top_10_weekly['Formatted_Weekly'] = selected_week
 
-        st.write(f"🏅 Top 10 Devotees for the {week_option} ({selected_week_str})")
+        st.write(f"🏅 Top 10 Devotees for the Week ({selected_week})")
         st.dataframe(top_10_weekly[['Formatted_Weekly', 'devotee_name', 'total_score']], hide_index=True)
 
         # Most favorite book of the week
