@@ -251,6 +251,16 @@ if not df.empty:
         st.write(f"🏆 Top 10 Devotees for {current_month} {current_year}")
         st.dataframe(top_10_monthly[['Month', 'devotee_name', 'total_score']], hide_index=True)
 
+        # Devotee of the Month
+        if not top_10_monthly.empty:
+            devotee_of_month = top_10_monthly.iloc[0]
+            st.write(f"🌟 Devotee of the Month ({current_month} {current_year})")
+            st.dataframe(pd.DataFrame({
+                'Month': [devotee_of_month['Month']],
+                'devotee_name': [devotee_of_month['devotee_name']],
+                'total_score': [devotee_of_month['total_score']]
+            }), hide_index=True)
+
 
         # Devotee of the Month
         devotee_of_month = top_10_monthly.iloc[0]
