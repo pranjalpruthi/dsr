@@ -261,16 +261,6 @@ if not df.empty:
                 'total_score': [devotee_of_month['total_score']]
             }), hide_index=True)
 
-
-        # Devotee of the Month
-        devotee_of_month = top_10_monthly.iloc[0]
-        st.write(f"🌟 Devotee of the Month ({current_month} {current_year})")
-        st.dataframe(pd.DataFrame({
-            'Month': [devotee_of_month['Month']],
-            'devotee_name': [devotee_of_month['devotee_name']],
-            'total_score': [devotee_of_month['total_score']]
-        }), hide_index=True)
-
         # Weekly intermediate devotees requiring spiritual guidance
         intermediate_devotees = df.groupby(['Formatted_Weekly', 'devotee_name'])['total_score'].sum().reset_index()
         intermediate_devotees = intermediate_devotees[(intermediate_devotees['total_score'] > 0) & (intermediate_devotees['total_score'] < 50)]
