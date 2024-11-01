@@ -8,8 +8,7 @@ from psycopg2 import sql
 import streamlit_shadcn_ui as ui
 
 # Database connection string
-conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
-
+conn_str = 'postgresql://postgres:iQfQoY5xqjtDpUlo@finely-wealthy-rudderfish.data-1.apse1.tembo.io:5432/postgres'
 # Connect to PostgreSQL database
 def get_connection():
     return psycopg2.connect(conn_str)
