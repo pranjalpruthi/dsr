@@ -9,6 +9,7 @@ import streamlit_shadcn_ui as ui
 
 # Database connection string
 conn_str = 'postgresql://postgres:iQfQoY5xqjtDpUlo@finely-wealthy-rudderfish.data-1.apse1.tembo.io:5432/postgres'
+
 # Connect to PostgreSQL database
 def get_connection():
     return psycopg2.connect(conn_str)
@@ -35,7 +36,7 @@ st.title('🪖 Daily Sadhana Report')
 
 # Display version badge
 ui.badges(
-    badge_list=[("v0.0.4 - 🌼 Govardhan Lifter Stage 🌼", "default")],
+    badge_list=[("v0.0.4 - 🌼 Govardhan Lifter Stage 🌼 [mataji-edition]", "default")],
     class_name="flex gap-2",
     key="version_badge"
 )
@@ -91,7 +92,7 @@ with cols[1]:
 with cols[2]:
     ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
 
-st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
+st.subheader('💐Hare Kṛṣṇa Matajis, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
