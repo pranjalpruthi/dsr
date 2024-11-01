@@ -26,17 +26,17 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
 
 # Streamlit app
 st.set_page_config(
-    page_title="🪖 Daily Sadhana Report 📝 ",
-    page_icon="🪖 ",
+    page_title="⛑️ Daily Sadhana Report 📝 ",
+    page_icon="⛑️ ",
     layout='wide',
 )
 
 # Title with version badge
-st.title('🪖 Daily Sadhana Report')
+st.title('⛑️ Daily Sadhana Report')
 
 # Display version badge
 ui.badges(
-    badge_list=[("v0.0.4 - 🌼 Govardhan Lifter Stage 🌼 [mataji-edition]", "default")],
+    badge_list=[("v0.0.4 - 🪷 Govardhan Lifter Stage 🪷 [mataji-edition]", "default")],
     class_name="flex gap-2",
     key="version_badge"
 )
