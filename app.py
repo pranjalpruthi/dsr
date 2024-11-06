@@ -207,12 +207,19 @@ c1, c2 = st.columns(2)
 # Statistics
 if not df.empty:
     with c1:
+
         # Get unique weeks
         unique_weeks = df['Formatted_Weekly'].unique()
         current_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
 
+        # Check if current_week_str is in unique_weeks
+        if current_week_str in unique_weeks:
+            default_index = list(unique_weeks).index(current_week_str)
+        else:
+            default_index = 0  # Default to the first week if current week is not found
+
         # Select week
-        selected_week = st.selectbox('Select Week', options=unique_weeks, index=list(unique_weeks).index(current_week_str))
+        selected_week = st.selectbox('Select Week', options=unique_weeks, index=default_index)
 
         # Filter data for the selected week
         selected_week_data = df[df['Formatted_Weekly'] == selected_week]
