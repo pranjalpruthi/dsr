@@ -8,7 +8,7 @@ from psycopg2 import sql
 import streamlit_shadcn_ui as ui
 
 # Database connection string
-conn_str = 'postgresql://postgres:jEicAaZs1btI16cN@immutably-incredible-dog.data-1.use1.tembo.io:5432/postgres'
+conn_str = 'postgresql://postgres:iQfQoY5xqjtDpUlo@finely-wealthy-rudderfish.data-1.apse1.tembo.io:5432/postgres'
 
 # Connect to PostgreSQL database
 def get_connection():
@@ -26,17 +26,17 @@ def calculate_scores(before_7_am_japa_session, before_7_am, from_7_to_9_am, afte
 
 # Streamlit app
 st.set_page_config(
-    page_title="🪖 Daily Sadhana Report 📝 ",
-    page_icon="🪖 ",
+    page_title="⛑️ Daily Sadhana Report 📝 ",
+    page_icon="⛑️ ",
     layout='wide',
 )
 
 # Title with version badge
-st.title('🪖 Daily Sadhana Report')
+st.title('⛑️ Daily Sadhana Report')
 
 # Display version badge
 ui.badges(
-    badge_list=[("v0.0.4 - 🌼 Govardhan Lifter Stage 🌼", "default")],
+    badge_list=[("v0.0.4 - 🪷 Govardhan Lifter Stage 🪷 [mataji-edition]", "default")],
     class_name="flex gap-2",
     key="version_badge"
 )
@@ -92,7 +92,7 @@ with cols[1]:
 with cols[2]:
     ui.metric_card(title="🧘‍♂️ Devotees Requiring Attention", content=f"{num_intermediate_devotees}", description="Devotees requiring spiritual guidance", key="devotees_attention")
 
-st.subheader('💐Hare Kṛṣṇa Prabhus💐, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
+st.subheader('💐Hare Kṛṣṇa Matajis, Daṇḍavat Praṇāma🙇🏻‍♂️, Jaya Śrīla Prabhupāda! 🙌 ', divider='rainbow')
 
 st.info('🫡 Kindly fill this  📝 Hare Krishna DSR before ⏰12 Midnight 🌏Krishna Standard Time (KST).', icon="⚠️")
 
@@ -207,12 +207,19 @@ c1, c2 = st.columns(2)
 # Statistics
 if not df.empty:
     with c1:
+
         # Get unique weeks
         unique_weeks = df['Formatted_Weekly'].unique()
         current_week_str = f"W{start_of_week.isocalendar()[1]}-{start_of_week.year}"
 
+        # Check if current_week_str is in unique_weeks
+        if current_week_str in unique_weeks:
+            default_index = list(unique_weeks).index(current_week_str)
+        else:
+            default_index = 0  # Default to the first week if current week is not found
+
         # Select week
-        selected_week = st.selectbox('Select Week', options=unique_weeks, index=list(unique_weeks).index(current_week_str))
+        selected_week = st.selectbox('Select Week', options=unique_weeks, index=default_index)
 
         # Filter data for the selected week
         selected_week_data = df[df['Formatted_Weekly'] == selected_week]
